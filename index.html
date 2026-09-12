@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#070b14" />
+
+    <title>Md Irfan Khan — Software Engineer, Dubai</title>
+    <meta
+      name="description"
+      content="Software engineer with 6+ years building fast, accessible React and TypeScript applications for FinTech, banking and industrial automation. Based in Dubai, UAE."
+    />
+    <meta name="author" content="Md Irfan Khan" />
+
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content="Md Irfan Khan — Software Engineer" />
+    <meta
+      property="og:description"
+      content="React and TypeScript at scale. Design systems, Core Web Vitals and micro-frontends for FinTech, banking and industrial teams."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Resolve the theme before first paint so there is no flash of the wrong
+         palette, and no colour transition for axe/Lighthouse to catch mid-flight. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("mik-theme");
+          document.documentElement.dataset.theme =
+            stored === "light" || stored === "dark"
+              ? stored
+              : matchMedia("(prefers-color-scheme: light)").matches
+                ? "light"
+                : "dark";
+        } catch (e) {
+          document.documentElement.dataset.theme = "dark";
+        }
+      })();
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Md Irfan Khan",
+        "jobTitle": "Software Engineer",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Dubai",
+          "addressCountry": "AE"
+        },
+        "email": "mailto:mdirfankhan98455@gmail.com",
+        "sameAs": [
+          "https://www.linkedin.com/in/mdirfankhandev/",
+          "https://github.com/Mdirfan81",
+          "https://medium.com/@mdirfankhan98455"
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
