@@ -1,0 +1,53 @@
+.wrap {
+  perspective: 1000px;
+  height: 100%;
+}
+
+.card {
+  position: relative;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition:
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.card:hover,
+.card:focus-within {
+  border-color: color-mix(in oklab, var(--c-accent) 42%, transparent);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Sheen that follows the pointer across the surface */
+.sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+  background: radial-gradient(
+    18rem 18rem at var(--px, 50%) var(--py, 50%),
+    color-mix(in oklab, var(--c-accent) 18%, transparent),
+    transparent 60%
+  );
+}
+
+.card:hover .sheen {
+  opacity: 1;
+}
+
+.content {
+  position: relative;
+  height: 100%;
+  transform: translateZ(28px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen {
+    display: none;
+  }
+  .content {
+    transform: none;
+  }
+}

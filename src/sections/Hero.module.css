@@ -1,0 +1,226 @@
+.hero {
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-height: 100svh;
+  padding-block: calc(var(--sp-10) + var(--sp-4)) var(--sp-8);
+}
+
+/* min-width:0 on both the grid item and its children: the default `auto`
+   minimum lets a long unbreakable child (the terminal's `white-space: pre`
+   lines) push the whole track past the viewport. */
+.hero > .shell {
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  gap: var(--sp-8);
+  grid-template-columns: 1fr;
+}
+
+.grid > * {
+  min-width: 0;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0.4rem 0.9rem 0.4rem 0.7rem;
+  border: 1px solid color-mix(in oklab, var(--c-success) 34%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in oklab, var(--c-success) 10%, transparent);
+  color: var(--c-mint);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.dot {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-success);
+}
+
+.dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--c-success);
+  animation: ping 2.4s var(--ease-out) infinite;
+}
+
+@keyframes ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  70%,
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.title {
+  font-size: var(--t-display);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.035em;
+  margin-block: var(--sp-5) var(--sp-5);
+  font-weight: 700;
+}
+
+.titleLine {
+  display: block;
+  overflow: hidden;
+}
+
+.role {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
+  color: var(--c-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.roleMain {
+  color: var(--c-text);
+  font-weight: 500;
+}
+
+.roleSep {
+  color: var(--c-accent);
+}
+
+.lede {
+  max-width: 54ch;
+  margin-top: var(--sp-5);
+  font-size: var(--t-lead);
+  color: var(--c-text-muted);
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+}
+
+/* ---- Terminal card ---- */
+.terminal {
+  padding: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.termBar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--c-hairline);
+  background: var(--c-glass-strong);
+}
+
+.termDots {
+  display: flex;
+  gap: 6px;
+}
+
+.termDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--c-hairline-strong);
+}
+
+.termTitle {
+  margin-inline: auto;
+  color: var(--c-text-subtle);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+}
+
+.termBody {
+  display: grid;
+  gap: 0.35rem;
+  padding: var(--sp-4);
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.termLine {
+  display: flex;
+  gap: 0.6rem;
+  white-space: pre;
+}
+
+.termPrompt {
+  color: var(--c-mint);
+}
+
+.termKey {
+  color: var(--c-violet);
+}
+
+.termVal {
+  color: var(--c-text);
+}
+
+.termComment {
+  color: var(--c-text-subtle);
+}
+
+.caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  translate: 0 0.18em;
+  background: var(--c-accent);
+  animation: blink 1.1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ---- Scroll cue ---- */
+.cue {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-end: var(--sp-5);
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--c-text-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.cueLine {
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(to bottom, var(--c-accent), transparent);
+}
+
+@media (min-width: 980px) {
+  .grid {
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+    gap: var(--sp-7);
+  }
+}

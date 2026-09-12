@@ -1,0 +1,85 @@
+.rail {
+  display: none;
+}
+
+@media (min-width: 1120px) and (min-height: 620px) {
+  .rail {
+    position: fixed;
+    inset-inline-end: clamp(1rem, 1.6vw, 2rem);
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    z-index: var(--z-nav);
+    display: grid;
+    gap: var(--sp-1);
+    padding: var(--sp-2);
+    border-radius: var(--r-pill);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+.stop {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 28px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--c-text-subtle);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.stop:hover {
+  color: var(--c-text);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  translate: 6px 0;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    translate var(--dur-base) var(--ease-out);
+  white-space: nowrap;
+}
+
+.rail:hover .label,
+.stop:focus-visible .label,
+.active .label {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.tick {
+  position: relative;
+  width: 22px;
+  height: 2px;
+  border-radius: var(--r-pill);
+  background: currentColor;
+  opacity: 0.45;
+  transition:
+    width var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+  flex: none;
+}
+
+.active {
+  color: var(--c-accent);
+}
+
+.active .tick {
+  width: 34px;
+  opacity: 1;
+  box-shadow: 0 0 12px color-mix(in oklab, var(--c-accent) 70%, transparent);
+}

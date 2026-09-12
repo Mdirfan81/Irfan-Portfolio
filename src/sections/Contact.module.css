@@ -1,0 +1,157 @@
+.panel {
+  position: relative;
+  margin-top: var(--sp-6);
+  padding: clamp(var(--sp-6), 4vw, var(--sp-8));
+  overflow: hidden;
+  border-radius: var(--r-xl);
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: -40% -10% auto -10%;
+  height: 120%;
+  background: radial-gradient(
+    50% 50% at 50% 0%,
+    color-mix(in oklab, var(--c-accent) 22%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: var(--t-h1);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  max-width: 16ch;
+  text-wrap: balance;
+}
+
+.copy {
+  margin-top: var(--sp-4);
+  max-width: 50ch;
+  color: var(--c-text-muted);
+  font-size: var(--t-lead);
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+
+.channels {
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+}
+
+.channel {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 56px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--r-md);
+  background: var(--c-glass);
+  color: var(--c-text);
+  text-decoration: none;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.channel:hover {
+  transform: translateX(4px);
+  border-color: color-mix(in oklab, var(--c-accent) 50%, transparent);
+  background: var(--c-glass-strong);
+  color: var(--c-text);
+}
+
+.channelIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--c-glass-strong);
+  color: var(--c-accent);
+}
+
+.channelLabel {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-text-subtle);
+}
+
+.channelValue {
+  font-size: var(--t-sm);
+  word-break: break-word;
+}
+
+.arrow {
+  margin-inline-start: auto;
+  color: var(--c-text-subtle);
+  flex: none;
+}
+
+/* ---- Footer ---- */
+/* The page ends here, so the section does not add its usual closing padding —
+   the footer is the last thing on the page and sits at the bottom of it. */
+.contact {
+  padding-block-end: 0;
+}
+
+.footer {
+  margin-top: var(--sp-8);
+  padding-block: var(--sp-5) var(--sp-6);
+  border-top: 1px solid var(--c-hairline);
+}
+
+.footerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: 0.8125rem;
+  color: var(--c-text-subtle);
+}
+
+.footerLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+
+.footerLinks a {
+  color: var(--c-text-muted);
+  text-decoration: none;
+}
+
+.footerLinks a:hover {
+  color: var(--c-text);
+}
+
+@media (min-width: 900px) {
+  .inner {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--sp-8);
+    align-items: center;
+  }
+}

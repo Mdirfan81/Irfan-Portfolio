@@ -1,0 +1,111 @@
+.field {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-bg);
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--c-bg);
+}
+
+/* Three drifting aurora blooms. Only transform/opacity animate, so the
+   compositor handles it and the main thread stays free. */
+.bloom {
+  position: absolute;
+  inset: -25%;
+  will-change: transform;
+}
+
+.bloom1 {
+  background: var(--grad-aurora-1);
+  animation: drift-a 26s var(--ease-in-out) infinite alternate;
+}
+
+.bloom2 {
+  background: var(--grad-aurora-2);
+  animation: drift-b 32s var(--ease-in-out) infinite alternate;
+}
+
+.bloom3 {
+  background: var(--grad-aurora-3);
+  animation: drift-c 38s var(--ease-in-out) infinite alternate;
+}
+
+@keyframes drift-a {
+  from {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6%, 5%, 0) scale(1.12);
+  }
+}
+
+@keyframes drift-b {
+  from {
+    transform: translate3d(4%, 3%, 0) scale(1.08);
+  }
+  to {
+    transform: translate3d(-5%, -4%, 0) scale(1);
+  }
+}
+
+@keyframes drift-c {
+  from {
+    transform: translate3d(0, 4%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-4%, -3%, 0) scale(1.15);
+  }
+}
+
+/* Pointer-tracked highlight. Position comes from CSS custom properties the
+   component writes directly, so React never re-renders on mouse move. */
+.spotlight {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    22rem 22rem at var(--mx, 50%) var(--my, 30%),
+    color-mix(in oklab, var(--c-accent) 16%, transparent) 0%,
+    transparent 65%
+  );
+  transition: opacity var(--dur-slow) var(--ease-out);
+  opacity: 0;
+}
+
+.spotlightOn {
+  opacity: 1;
+}
+
+/* Fine grid — gives the depth something to sit against */
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--c-hairline) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--c-hairline) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(80% 60% at 50% 0%, #000 0%, transparent 75%);
+  opacity: 0.5;
+}
+
+/* Film grain, so the large gradients never band */
+.grain {
+  position: absolute;
+  inset: -100%;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 0%, transparent 40%, var(--c-bg) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bloom {
+    animation: none;
+  }
+  .spotlight {
+    display: none;
+  }
+}

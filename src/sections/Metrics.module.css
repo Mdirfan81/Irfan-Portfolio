@@ -1,0 +1,40 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-6);
+}
+
+.card {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  height: 100%;
+}
+
+.value {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 2rem + 2.4vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* Reserve the line box so the count-up never shifts layout (CLS) */
+  min-height: 1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--c-text);
+}
+
+.detail {
+  font-size: var(--t-sm);
+  color: var(--c-text-muted);
+  line-height: 1.55;
+}

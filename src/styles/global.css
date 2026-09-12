@@ -1,0 +1,337 @@
+@import './tokens.css';
+
+/* ==========================================================================
+   Reset + base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* nav height + breathing room, so anchor targets are never hidden */
+  scroll-padding-top: 6rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip; /* never a horizontal scrollbar */
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--c-accent);
+  text-decoration-color: color-mix(in oklab, var(--c-accent) 45%, transparent);
+  text-underline-offset: 0.22em;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--c-text);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+/* ==========================================================================
+   Focus — visible always. Never remove the ring; replace it with a better one.
+   ========================================================================== */
+:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 3px;
+  border-radius: var(--r-sm);
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--sp-4);
+  top: var(--sp-4);
+  z-index: var(--z-overlay);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--c-bg-raised);
+  color: var(--c-text);
+  border: 1px solid var(--c-hairline-strong);
+  border-radius: var(--r-md);
+  transform: translateY(-150%);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   Reduced motion — one global switch, honoured by CSS and by Motion.
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Layout primitives
+   ========================================================================== */
+.shell {
+  width: 100%;
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  position: relative;
+  padding-block: var(--section-y);
+  z-index: var(--z-content);
+}
+
+.section + .section {
+  border-top: 1px solid transparent;
+  border-image: var(--grad-rule) 1;
+}
+
+.stack {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+
+.eyebrow::before {
+  content: '';
+  width: 1.75rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.section-title {
+  font-size: var(--t-h2);
+  margin-block: var(--sp-3) var(--sp-4);
+}
+
+.section-lede {
+  max-width: var(--measure);
+  color: var(--c-text-muted);
+  font-size: var(--t-lead);
+}
+
+.gradient-text {
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glass surface — the repeated material of the whole site.
+   Two layers: a veil of the page ground so text stays legible over the moving
+   3D scene, and the white tint that gives the surface its glassiness. */
+.glass {
+  position: relative;
+  background-color: var(--c-glass);
+  background-image: linear-gradient(var(--c-veil), var(--c-veil));
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+
+/* Blur is the single most expensive thing on the page once a WebGL scene is
+   running behind it. Phones trade it for a more opaque veil — same legibility,
+   a fraction of the compositing cost. */
+@media (max-width: 760px) {
+  .glass {
+    --c-veil: color-mix(in oklab, var(--c-bg) 90%, transparent);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ==========================================================================
+   Buttons — 44px minimum target, real hover + active states
+   ========================================================================== */
+.btn {
+  --btn-bg: var(--c-glass-strong);
+  --btn-fg: var(--c-text);
+  --btn-bd: var(--c-hairline-strong);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: var(--sp-3) var(--sp-5);
+  border: 1px solid var(--btn-bd);
+  border-radius: var(--r-pill);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-size: var(--t-sm);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--c-accent) 55%, transparent);
+  color: var(--btn-fg);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: var(--dur-instant);
+}
+
+.btn--primary {
+  --btn-bg: var(--c-accent-strong);
+  --btn-fg: var(--c-on-accent);
+  --btn-bd: transparent;
+  font-weight: 600;
+  box-shadow: var(--shadow-glow);
+}
+
+.btn--primary:hover {
+  --btn-bg: var(--c-accent);
+  color: var(--c-on-accent);
+}
+
+/* ==========================================================================
+   Chips / tags
+   ========================================================================== */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--r-pill);
+  background: var(--c-glass);
+  color: var(--c-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.chip--core {
+  border-color: color-mix(in oklab, var(--c-accent) 40%, transparent);
+  background: color-mix(in oklab, var(--c-accent) 12%, transparent);
+  color: var(--c-accent);
+  font-weight: 500;
+}
+
+.chip--mono {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--c-accent) 40%, transparent);
+  color: var(--c-text);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--c-bg-sunken);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--c-hairline-strong);
+  border-radius: var(--r-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--c-accent) 60%, transparent);
+}

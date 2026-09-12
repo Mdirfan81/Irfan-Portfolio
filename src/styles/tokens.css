@@ -1,0 +1,145 @@
+/* ==========================================================================
+   Design tokens — "Deep-space aurora glass"
+   Single source of truth. Components never hardcode a hex value.
+   ========================================================================== */
+
+:root {
+  /* ---- Surface ramp (dark base) ---- */
+  --c-bg: #070b14;
+  --c-bg-raised: #0b1220;
+  --c-bg-sunken: #05080f;
+
+  /* Glass layers — translucency over the aurora, not flat fills */
+  --c-glass: rgb(255 255 255 / 4.5%);
+  --c-glass-strong: rgb(255 255 255 / 7%);
+  --c-hairline: rgb(255 255 255 / 9%);
+  --c-hairline-strong: rgb(255 255 255 / 16%);
+  /* Ground veil painted under every glass surface, so card copy keeps its
+     contrast over the 3D corridor instead of competing with it. */
+  --c-veil: color-mix(in oklab, var(--c-bg) 76%, transparent);
+
+  /* ---- Content ---- */
+  --c-text: #e8edf7; /* 16.5:1 on --c-bg */
+  --c-text-muted: #9aabc4; /* 8.2:1  on --c-bg */
+  --c-text-subtle: #6f8099; /*  4.6:1 on --c-bg — decorative labels only */
+
+  /* ---- Accents ---- */
+  --c-accent: #6aa6ff; /* 7.8:1 on --c-bg */
+  --c-accent-strong: #4f8cff;
+  --c-violet: #a98bff; /* 7.2:1 */
+  --c-cyan: #4fd8e8; /* 11.6:1 */
+  --c-mint: #5eead4;
+  --c-on-accent: #05101f; /* text sitting on a filled accent button */
+
+  /* Semantic */
+  --c-focus: #7cc4ff;
+  --c-success: #34d399;
+
+  /* Aurora field */
+  --grad-aurora-1: radial-gradient(60% 60% at 20% 15%, rgb(79 140 255 / 42%) 0%, transparent 70%);
+  --grad-aurora-2: radial-gradient(55% 55% at 82% 25%, rgb(169 139 255 / 34%) 0%, transparent 72%);
+  --grad-aurora-3: radial-gradient(70% 60% at 55% 95%, rgb(79 216 232 / 20%) 0%, transparent 70%);
+  --grad-text: linear-gradient(120deg, #ffffff 0%, #b9d2ff 42%, #a98bff 100%);
+  --grad-rule: linear-gradient(90deg, transparent, var(--c-hairline-strong) 18%, var(--c-hairline-strong) 82%, transparent);
+
+  /* ---- Type ---- */
+  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+
+  /* Fluid scale — clamp() so nothing needs a breakpoint to stay readable */
+  --t-display: clamp(2.75rem, 1.6rem + 5.6vw, 5.25rem);
+  --t-h1: clamp(2.25rem, 1.5rem + 3.4vw, 3.75rem);
+  --t-h2: clamp(1.75rem, 1.35rem + 1.9vw, 2.75rem);
+  --t-h3: clamp(1.25rem, 1.1rem + 0.7vw, 1.5rem);
+  --t-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  --t-body: 1rem; /* never below 16px */
+  --t-sm: 0.9375rem;
+  --t-label: 0.75rem;
+
+  --lh-tight: 1.08;
+  --lh-snug: 1.3;
+  --lh-body: 1.65;
+  --tracking-label: 0.14em;
+
+  /* ---- Space (8pt base) ---- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  --sp-9: 6rem;
+  --sp-10: 8rem;
+
+  --section-y: clamp(4.5rem, 3rem + 7vw, 9rem);
+  --gutter: clamp(1.25rem, 0.75rem + 2.4vw, 3rem);
+  --measure: 68ch;
+  --max-w: 1200px;
+
+  /* ---- Radii & elevation ---- */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 6%) inset, 0 18px 40px -24px rgb(0 0 0 / 80%);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 10%) inset, 0 32px 64px -28px rgb(2 6 20 / 90%);
+  --shadow-glow: 0 0 0 1px rgb(106 166 255 / 22%), 0 24px 60px -30px rgb(79 140 255 / 55%);
+
+  /* ---- Motion ---- */
+  --dur-instant: 90ms;
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+  --dur-reveal: 640ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --z-bg: 0;
+  --z-content: 1;
+  --z-nav: 50;
+  --z-overlay: 100;
+
+  color-scheme: dark;
+}
+
+/* Light theme — opt-in via [data-theme="light"] on <html>.
+   Same token names, re-pointed. Contrast re-checked at AA. */
+:root[data-theme='light'] {
+  --c-bg: #f7f8fc;
+  --c-bg-raised: #ffffff;
+  --c-bg-sunken: #eef1f8;
+
+  --c-glass: rgb(12 20 40 / 3.5%);
+  --c-glass-strong: rgb(12 20 40 / 5.5%);
+  --c-hairline: rgb(12 20 40 / 10%);
+  --c-hairline-strong: rgb(12 20 40 / 18%);
+  --c-veil: color-mix(in oklab, var(--c-bg) 82%, transparent);
+
+  --c-text: #0d1424; /* 16.9:1 */
+  --c-text-muted: #45536b; /* 8.4:1 */
+  --c-text-subtle: #5c6a83; /* 5.6:1 */
+
+  --c-accent: #1d4ed8; /* 7.6:1 on #f7f8fc */
+  --c-accent-strong: #1e40af;
+  --c-violet: #6d28d9; /* 7.9:1 */
+  --c-cyan: #0e7490;
+  --c-mint: #0f766e;
+  --c-on-accent: #ffffff;
+  --c-focus: #1d4ed8;
+
+  --grad-aurora-1: radial-gradient(60% 60% at 20% 15%, rgb(79 140 255 / 20%) 0%, transparent 70%);
+  --grad-aurora-2: radial-gradient(55% 55% at 82% 25%, rgb(169 139 255 / 18%) 0%, transparent 72%);
+  --grad-aurora-3: radial-gradient(70% 60% at 55% 95%, rgb(14 116 144 / 12%) 0%, transparent 70%);
+  --grad-text: linear-gradient(120deg, #0d1424 0%, #1d4ed8 55%, #6d28d9 100%);
+
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 80%) inset, 0 16px 32px -26px rgb(13 20 36 / 45%);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 90%) inset, 0 28px 56px -30px rgb(13 20 36 / 40%);
+  --shadow-glow: 0 0 0 1px rgb(29 78 216 / 22%), 0 24px 60px -34px rgb(29 78 216 / 40%);
+
+  color-scheme: light;
+}
