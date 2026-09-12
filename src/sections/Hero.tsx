@@ -122,7 +122,7 @@ export function Hero() {
             initial="hidden"
             animate="visible"
           >
-            {profile.tagline} Five years of it — design systems that hold,
+            {profile.tagline} 6+ years of it — design systems that hold,
             pipelines that catch things, and performance budgets teams actually
             keep.
           </motion.p>
@@ -194,7 +194,7 @@ export function Hero() {
             <div className={styles.termBody} aria-hidden="true">
               <p className={styles.termLine}>
                 <span className={styles.termComment}>
-                  // five years, four teams, one obsession
+                  // 6+ years, four teams, one obsession
                 </span>
               </p>
               {TERMINAL.map((row) => (
