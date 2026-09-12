@@ -9,7 +9,7 @@ export function Experience() {
         <Reveal>
           <p className="eyebrow">Experience</p>
           <h2 className="section-title" id="experience-title">
-            Five Years, Four Teams
+            6+ Years, Four Teams
           </h2>
           <p className="section-lede">
             From an internship in Hyderabad to leading frontend work for an industrial
