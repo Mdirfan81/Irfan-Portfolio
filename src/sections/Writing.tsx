@@ -2,32 +2,35 @@ import { ArrowUpRight, BookOpen } from 'lucide-react'
 import { posts } from '@/data/writing'
 import { profile } from '@/data/profile'
 import { Reveal } from '@/components/Reveal'
+import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import styles from './Writing.module.css'
 
 export function Writing() {
   return (
     <section className="section" id="writing" aria-labelledby="writing-title">
       <div className="shell">
-        <Reveal>
-          <div className={styles.head}>
-            <div>
-              <p className="eyebrow">Writing</p>
-              <h2 className="section-title" id="writing-title">
-                Explaining the thing I just learned
-              </h2>
-              <p className="section-lede">
-                Short pieces on Medium, written for the version of me who was stuck on the same
-                problem a week earlier.
-              </p>
-            </div>
+        <div className={styles.head}>
+          <div>
+            <Eyebrow>Writing</Eyebrow>
+            <SplitText
+              className="section-title"
+              id="writing-title"
+              text="Explaining the thing I just learned"
+            />
+            <FadeText className="section-lede">
+              Short pieces on Medium, written for the version of me who was stuck on the same
+              problem a week earlier.
+            </FadeText>
+          </div>
+          <Reveal delay={0.35}>
             <a className="btn" href={profile.links.medium} target="_blank" rel="noreferrer">
               <BookOpen size={16} aria-hidden />
               All posts on Medium
               <ArrowUpRight size={14} aria-hidden />
               <span className="visually-hidden">(opens in a new tab)</span>
             </a>
-          </div>
-        </Reveal>
+          </Reveal>
+        </div>
 
         <ol className={styles.list}>
           {posts.map((post, i) => (

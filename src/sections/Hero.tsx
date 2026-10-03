@@ -1,4 +1,10 @@
-import { motion, useReducedMotion } from "motion/react";
+import { useRef } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "motion/react";
 import {
   ArrowDown,
   ArrowUpRight,
@@ -27,6 +33,15 @@ const TERMINAL = [
 export function Hero() {
   const reduced = useReducedMotion() ?? false;
 
+  // As the hero scrolls away, its copy drifts up and fades a little behind the page.
+  const heroRef = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -90]);
+  const copyOpacity = useTransform(scrollYProgress, [0, 0.8], [1, reduced ? 1 : 0.15]);
+
   const lineVariants = {
     hidden: { y: reduced ? 0 : "110%", opacity: reduced ? 0 : 1 },
     visible: (i: number) => ({
@@ -53,10 +68,29 @@ export function Hero() {
     }),
   };
 
+  /** Terminal rows "type" in left to right, one after another. */
+  const typeLine = {
+    hidden: reduced
+      ? { opacity: 0 }
+      : { clipPath: "inset(0 100% 0 0)", opacity: 1 },
+    visible: {
+      clipPath: "inset(0 0% 0 0)",
+      opacity: 1,
+      transition: reduced
+        ? { duration: 0.2 }
+        : { duration: 0.45, ease: "linear" as const },
+    },
+  };
+
   return (
-    <section className={styles.hero} id="top" aria-labelledby="hero-title">
+    <section
+      ref={heroRef}
+      className={styles.hero}
+      id="top"
+      aria-labelledby="hero-title"
+    >
       <div className={`shell ${styles.grid}`}>
-        <div>
+        <motion.div style={{ y: copyY, opacity: copyOpacity }}>
           <motion.p
             className={styles.status}
             variants={fade}
@@ -81,7 +115,7 @@ export function Hero() {
                   initial="hidden"
                   animate="visible"
                   className={
-                    i === NAME_LINES.length - 1 ? "gradient-text" : undefined
+                    i === NAME_LINES.length - 1 ? "gradient-text gradient-text--shimmer" : undefined
                   }
                 >
                   {line}
@@ -174,7 +208,7 @@ export function Hero() {
               Medium
             </a>
           </motion.div>
-        </div>
+        </motion.div>
 
         <motion.div
           variants={fade}
@@ -191,25 +225,43 @@ export function Hero() {
               </span>
               <span className={styles.termTitle}>~/irfan/profile.json</span>
             </div>
-            <div className={styles.termBody} aria-hidden="true">
-              <p className={styles.termLine}>
+            <motion.div
+              className={styles.termBody}
+              aria-hidden="true"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: {
+                    delayChildren: reduced ? 0 : 0.9,
+                    staggerChildren: reduced ? 0 : 0.22,
+                  },
+                },
+              }}
+            >
+              <motion.p className={styles.termLine} variants={typeLine}>
                 <span className={styles.termComment}>
                   // 6+ years, four teams, one obsession
                 </span>
-              </p>
+              </motion.p>
               {TERMINAL.map((row) => (
-                <p className={styles.termLine} key={row.key}>
+                <motion.p
+                  className={styles.termLine}
+                  key={row.key}
+                  variants={typeLine}
+                >
                   <span className={styles.termPrompt}>›</span>
                   <span className={styles.termKey}>{row.key}:</span>
                   <span className={styles.termVal}>{row.val}</span>
-                </p>
+                </motion.p>
               ))}
-              <p className={styles.termLine}>
+              <motion.p className={styles.termLine} variants={typeLine}>
                 <span className={styles.termPrompt}>›</span>
                 <span className={styles.termComment}>ship it</span>
                 <span className={styles.caret} />
-              </p>
-            </div>
+              </motion.p>
+            </motion.div>
           </TiltCard>
         </motion.div>
       </div>

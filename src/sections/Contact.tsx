@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { profile } from "@/data/profile";
 import { Reveal } from "@/components/Reveal";
+import { Eyebrow, SplitText } from "@/components/TextReveal";
 import styles from "./Contact.module.css";
 
 const YEAR = new Date().getFullYear();
@@ -51,18 +52,18 @@ export function Contact() {
       aria-labelledby="contact-title"
     >
       <div className="shell">
-        <Reveal>
-          <p className="eyebrow">Contact</p>
-          <h2 className="section-title" id="contact-title">
-            Let us build something
-          </h2>
-        </Reveal>
+        <Eyebrow>Contact</Eyebrow>
+        <SplitText
+          className="section-title"
+          id="contact-title"
+          text="Let us build something"
+        />
 
         <Reveal delay={0.05}>
           <div className={`glass ${styles.panel}`}>
             <div className={styles.inner}>
               <div>
-                <p className={`${styles.headline} gradient-text`}>
+                <p className={`${styles.headline} gradient-text gradient-text--shimmer`}>
                   Have a frontend problem worth solving?
                 </p>
                 <p className={styles.copy}>

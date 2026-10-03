@@ -1,7 +1,8 @@
 import { useReducedMotion } from 'motion/react'
 import { metrics, type Metric } from '@/data/metrics'
 import { TiltCard } from '@/components/TiltCard'
-import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
+import { RevealGroup, RevealItem } from '@/components/Reveal'
+import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import { useCountUp } from '@/lib/useCountUp'
 import styles from './Metrics.module.css'
 
@@ -33,16 +34,12 @@ export function Metrics() {
   return (
     <section className="section" id="impact" aria-labelledby="impact-title">
       <div className="shell">
-        <Reveal>
-          <p className="eyebrow">Impact</p>
-          <h2 className="section-title" id="impact-title">
-            Numbers from shipped work
-          </h2>
-          <p className="section-lede">
-            Every figure below comes from production systems — measured before and after, not
-            estimated.
-          </p>
-        </Reveal>
+        <Eyebrow>Impact</Eyebrow>
+        <SplitText className="section-title" id="impact-title" text="Numbers from shipped work" />
+        <FadeText className="section-lede">
+          Every figure below comes from production systems — measured before and after, not
+          estimated.
+        </FadeText>
 
         <RevealGroup className={styles.grid}>
           {metrics.map((m) => (

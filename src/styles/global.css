@@ -1,3 +1,4 @@
+@import './fonts.css';
 @import './tokens.css';
 
 /* ==========================================================================
@@ -171,9 +172,53 @@ ol {
   opacity: 0.6;
 }
 
+/* Animated eyebrow draws its own rule (see TextReveal → Eyebrow). */
+.eyebrow--animated::before {
+  display: none;
+}
+
+.eyebrow-rule {
+  width: 1.75rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+  transform-origin: left center;
+}
+
 .section-title {
   font-size: var(--t-h2);
   margin-block: var(--sp-3) var(--sp-4);
+}
+
+/* Split-text reveal: each word rises out of its own clipped line box.
+   The small vertical padding keeps descenders from being clipped. */
+.split-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-block: 0.08em;
+  margin-block: -0.08em;
+}
+
+.split-word {
+  display: inline-block;
+  transform-origin: left bottom;
+  will-change: transform;
+}
+
+/* A slow light sweep across gradient text. */
+.gradient-text--shimmer {
+  background-size: 220% 100%;
+  animation: text-shimmer 6s ease-in-out infinite alternate;
+}
+
+@keyframes text-shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
 }
 
 .section-lede {

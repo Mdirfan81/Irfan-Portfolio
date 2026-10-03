@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { AuroraBackground } from './AuroraBackground'
 
@@ -12,6 +12,7 @@ function detect(): Support {
   // Respect an explicit request to save data before spending 200KB on three.js.
   const connection = (navigator as { connection?: { saveData?: boolean } }).connection
   if (connection?.saveData) return 'none'
+  if (window.innerWidth < MIN_SCENE_WIDTH) return 'none'
 
   const gl = (() => {
     try {
@@ -29,6 +30,43 @@ function detect(): Support {
   return cores >= 8 && roomy ? 'high' : 'low'
 }
 
+/** Phones keep the CSS aurora: the scene costs them the most and shows the least. */
+const MIN_SCENE_WIDTH = 768
+
+/**
+ * True once the page has finished loading and the main thread has gone quiet.
+ * The scene is decoration, so it must never compete with the content for the
+ * network or the CPU during first paint.
+ */
+function useAfterLoadIdle(): boolean {
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    let idle = 0
+    let timer = 0
+
+    const whenIdle = () => {
+      if (typeof window.requestIdleCallback === 'function') {
+        idle = window.requestIdleCallback(() => setReady(true), { timeout: 2000 })
+      } else {
+        // Safari has no requestIdleCallback.
+        timer = window.setTimeout(() => setReady(true), 200)
+      }
+    }
+
+    if (document.readyState === 'complete') whenIdle()
+    else window.addEventListener('load', whenIdle, { once: true })
+
+    return () => {
+      window.removeEventListener('load', whenIdle)
+      if (idle) window.cancelIdleCallback(idle)
+      clearTimeout(timer)
+    }
+  }, [])
+
+  return ready
+}
+
 /**
  * Chooses what sits behind the page.
  *
@@ -44,11 +82,12 @@ export function Backdrop() {
 
   // The scene measures itself and hands the page back if it cannot keep up.
   const handleGiveUp = useCallback(() => setSupport('none'), [])
+  const ready = useAfterLoadIdle()
 
   return (
     <>
       <AuroraBackground />
-      {support !== 'none' && (
+      {ready && support !== 'none' && (
         <Suspense fallback={null}>
           <JourneyCanvas quality={support} still={reduced} onGiveUp={handleGiveUp} />
         </Suspense>

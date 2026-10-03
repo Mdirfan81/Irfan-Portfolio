@@ -4,6 +4,7 @@ import { Star } from 'lucide-react'
 import { projectFilters, projects, type ProjectFilter } from '@/data/projects'
 import { TiltCard } from '@/components/TiltCard'
 import { Reveal } from '@/components/Reveal'
+import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import styles from './Projects.module.css'
 
 export function Projects() {
@@ -21,19 +22,22 @@ export function Projects() {
   return (
     <section className="section" id="projects" aria-labelledby="projects-title">
       <div className="shell">
-        <Reveal>
-          <div className={styles.head}>
-            <div>
-              <p className="eyebrow">Selected work</p>
-              <h2 className="section-title" id="projects-title">
-                Things I built and still stand behind
-              </h2>
-              <p className="section-lede">
-                {projects.length} products across industrial automation, banking and education —
-                filter by the domain you care about.
-              </p>
-            </div>
+        <div className={styles.head}>
+          <div>
+            <Eyebrow>Selected work</Eyebrow>
+            <SplitText
+              className="section-title"
+              id="projects-title"
+              text="Things I built and still stand behind"
+            />
+            <FadeText className="section-lede">
+              {projects.length} products across industrial automation, banking and education —
+              filter by the domain you care about.
+            </FadeText>
           </div>
+        </div>
+
+        <Reveal delay={0.35}>
 
           <div className={styles.filters} role="group" aria-label="Filter projects by domain">
             {projectFilters.map((f) => {

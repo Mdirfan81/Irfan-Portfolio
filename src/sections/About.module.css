@@ -4,7 +4,7 @@
   margin-top: var(--sp-6);
 }
 
-.prose p + p {
+.prose > * + * {
   margin-top: var(--sp-4);
 }
 

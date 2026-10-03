@@ -1,5 +1,6 @@
 import { profile } from "@/data/profile";
 import { Reveal } from "@/components/Reveal";
+import { Eyebrow, ScrollHighlight, SplitText } from "@/components/TextReveal";
 import styles from "./About.module.css";
 
 const FACTS = [
@@ -13,18 +14,20 @@ export function About() {
   return (
     <section className="section" id="about" aria-labelledby="about-title">
       <div className="shell">
-        <Reveal>
-          <p className="eyebrow">About</p>
-          <h2 className="section-title" id="about-title">
-            The engineer behind the metrics
-          </h2>
-        </Reveal>
+        <Eyebrow>About</Eyebrow>
+        <SplitText
+          className="section-title"
+          id="about-title"
+          text="The engineer behind the metrics"
+        />
 
         <div className={styles.grid}>
-          <Reveal className={styles.prose} delay={0.05}>
-            <p>{profile.summary}</p>
-            <p>{profile.summarySecondary}</p>
-          </Reveal>
+          <div className={styles.prose}>
+            <ScrollHighlight text={profile.summary} />
+            <Reveal delay={0.05}>
+              <p>{profile.summarySecondary}</p>
+            </Reveal>
+          </div>
 
           <div className={styles.side}>
             <Reveal delay={0.1}>

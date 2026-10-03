@@ -9,7 +9,8 @@ import {
 } from 'lucide-react'
 import { skillGroups } from '@/data/skills'
 import { TiltCard } from '@/components/TiltCard'
-import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
+import { RevealGroup, RevealItem } from '@/components/Reveal'
+import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import styles from './Skills.module.css'
 
 const ICONS: Record<string, LucideIcon> = {
@@ -43,16 +44,12 @@ export function Skills() {
   return (
     <section className="section" id="skills" aria-labelledby="skills-title">
       <div className="shell">
-        <Reveal>
-          <p className="eyebrow">Skills</p>
-          <h2 className="section-title" id="skills-title">
-            The stack I reach for
-          </h2>
-          <p className="section-lede">
-            Highlighted items are the ones I have taken to production repeatedly, not just tried
-            once.
-          </p>
-        </Reveal>
+        <Eyebrow>Skills</Eyebrow>
+        <SplitText className="section-title" id="skills-title" text="The stack I reach for" />
+        <FadeText className="section-lede">
+          Highlighted items are the ones I have taken to production repeatedly, not just tried
+          once.
+        </FadeText>
 
         <RevealGroup className={styles.grid} stagger={0.06}>
           {skillGroups.map((group) => {

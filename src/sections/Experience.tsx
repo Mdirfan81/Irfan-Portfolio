@@ -1,21 +1,18 @@
 import { experience } from '@/data/experience'
 import { Reveal } from '@/components/Reveal'
+import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import styles from './Experience.module.css'
 
 export function Experience() {
   return (
     <section className="section" id="experience" aria-labelledby="experience-title">
       <div className="shell">
-        <Reveal>
-          <p className="eyebrow">Experience</p>
-          <h2 className="section-title" id="experience-title">
-            6+ Years, Four Teams
-          </h2>
-          <p className="section-lede">
-            From an internship in Hyderabad to leading frontend work for an industrial
-            automation group in Dubai.
-          </p>
-        </Reveal>
+        <Eyebrow>Experience</Eyebrow>
+        <SplitText className="section-title" id="experience-title" text="6+ Years, Four Teams" />
+        <FadeText className="section-lede">
+          From an internship in Hyderabad to leading frontend work for an industrial
+          automation group in Dubai.
+        </FadeText>
 
         <ol className={styles.timeline}>
           {experience.map((role, i) => (
