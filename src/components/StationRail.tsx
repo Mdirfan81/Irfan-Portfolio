@@ -6,7 +6,7 @@ const IDS = navItems.map((n) => n.id)
 
 /**
  * The journey has stations; this is the map. A fixed rail marking where you are
- * along the corridor, with a jump to any stop. Desktop only — on small screens
+ * along the flight, with a jump to any stop. Desktop only — on small screens
  * the nav sheet already does this job and screen space is better spent on content.
  */
 export function StationRail() {

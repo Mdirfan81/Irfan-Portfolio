@@ -24,7 +24,7 @@ const STRIKES = 3;
  * up: first by dropping resolution, then by handing the page back to the CSS
  * backdrop entirely.
  *
- * A portfolio that stutters is worse than one without a 3D corridor, and the
+ * A portfolio that stutters is worse than one without a 3D backdrop, and the
  * devices that struggle are exactly the ones least likely to have a choice.
  * Giving up is permanent, though, so it takes sustained evidence — never one
  * bad moment during a scroll.

@@ -1,9 +1,15 @@
 import { useEffect, useRef, type RefObject } from 'react'
+import { STATIONS } from '@/three/stations'
 
 export type JourneyInput = {
-  /** 0 at the top of the document, 1 at the bottom. */
-  progress: number
-  /** Pointer position in -1…1, already smoothed. */
+  /** Scroll offset in viewport heights, so speed reads the same on any screen. */
+  y: number
+  /**
+   * Position along the stations as a float: 2.0 is the third section's top
+   * crossing the middle of the viewport, 2.5 is halfway through that section.
+   */
+  station: number
+  /** Pointer position in -1…1. */
   px: number
   py: number
 }
@@ -14,15 +20,33 @@ export type JourneyInput = {
  * the mouse moved or the page scrolled.
  */
 export function useJourneyInput(): RefObject<JourneyInput> {
-  const ref = useRef<JourneyInput>({ progress: 0, px: 0, py: 0 })
+  const ref = useRef<JourneyInput>({ y: 0, station: 0, px: 0, py: 0 })
 
   useEffect(() => {
     let frame = 0
 
     const readScroll = () => {
       frame = 0
-      const max = document.documentElement.scrollHeight - window.innerHeight
-      ref.current.progress = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0
+      const viewport = window.innerHeight || 1
+      ref.current.y = window.scrollY / viewport
+
+      // Sections differ in height, so the station is measured from where each
+      // one actually sits rather than assumed from overall scroll progress.
+      const probe = viewport / 2
+      let station = 0
+      for (let i = 0; i < STATIONS.length; i++) {
+        const top = document.getElementById(STATIONS[i].id)?.getBoundingClientRect().top
+        if (top === undefined || top > probe) break
+        const next = document.getElementById(STATIONS[i + 1]?.id ?? '')?.getBoundingClientRect().top
+        station = next === undefined || next <= top ? i : i + Math.min((probe - top) / (next - top), 1)
+      }
+
+      // A short last section never reaches the middle of the viewport, so the
+      // end of the page pulls the journey through to its final station.
+      const remaining = document.documentElement.scrollHeight - viewport - window.scrollY
+      const last = STATIONS.length - 1
+      ref.current.station =
+        remaining < probe ? Math.max(station, last - Math.max(remaining, 0) / probe) : station
     }
 
     const onScroll = () => {

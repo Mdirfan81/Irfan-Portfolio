@@ -15,7 +15,7 @@
   --c-hairline: rgb(255 255 255 / 9%);
   --c-hairline-strong: rgb(255 255 255 / 16%);
   /* Ground veil painted under every glass surface, so card copy keeps its
-     contrast over the 3D corridor instead of competing with it. */
+     contrast over the 3D scene instead of competing with it. */
   --c-veil: color-mix(in oklab, var(--c-bg) 76%, transparent);
 
   /* ---- Content ---- */

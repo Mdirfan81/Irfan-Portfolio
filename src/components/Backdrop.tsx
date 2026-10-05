@@ -72,7 +72,7 @@ function useAfterLoadIdle(): boolean {
  *
  * The CSS aurora always renders: it is cheap, it is the whole backdrop where
  * WebGL is unavailable, and it is what shows while three.js is still loading.
- * The 3D corridor layers on top when the device can carry it.
+ * The 3D star field layers on top when the device can carry it.
  */
 export function Backdrop() {
   const reduced = useReducedMotion() ?? false

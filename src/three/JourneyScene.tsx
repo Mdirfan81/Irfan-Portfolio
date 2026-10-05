@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useRef, type RefObject } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { useFrame, type RootState } from "@react-three/fiber";
 import * as THREE from "three";
+import { STATIONS } from "./stations";
+import { buildFormations, rng } from "./formations";
 import {
-  CAMERA_START_Z,
-  JOURNEY_DEPTH,
-  JOURNEY_TRAVEL,
-  STATION_GAP,
-  STATIONS,
-} from "./stations";
+  CONSTELLATION_FRAGMENT,
+  CONSTELLATION_VERTEX,
+  NEBULA_FRAGMENT,
+  SCREEN_FRAGMENT,
+  SCREEN_VERTEX,
+  STAR_FRAGMENT,
+  STAR_VERTEX,
+} from "./shaders";
 import type { JourneyInput } from "@/lib/useJourneyInput";
 import type { ThemeColors } from "@/lib/useThemeColors";
 
@@ -19,467 +23,477 @@ type SceneProps = {
   still: boolean;
 };
 
-/** Shared soft-falloff sprite, built once by the scene root. */
-type Glow = { glow: THREE.Texture | null };
+/**
+ * Smoothed state every layer reads from. Raw scroll arrives in steps — a wheel
+ * notch, a touch fling — so nothing in the scene follows it directly; it all
+ * follows this, which eases toward the input a little every frame.
+ */
+type Flight = {
+  station: number;
+  /** Scroll speed in viewport heights per second, signed. */
+  velocity: number;
+  /** How far the star field has flown. Wraps at STAR_DEPTH. */
+  travel: number;
+  /** 0 while the stars are still scattered, 1 once the first figure has formed. */
+  intro: number;
+  lastY: number | null;
+  /** Where the constellation sits on screen, in 0…1. The nebula glows behind it. */
+  focusX: number;
+  focusY: number;
+};
+
+type Layer = Omit<SceneProps, "input"> & { flightRef: RefObject<Flight> };
+
+const CAMERA_Z = 7;
+/** The constellation hangs this far in front of the camera. */
+const FIGURE_Z = -3;
+const STAR_DEPTH = 64;
+const INTRO_SECONDS = 2.8;
+/** Share of a section the figure holds still for before it starts to regroup. */
+const HOLD = 0.42;
+const LAST = STATIONS.length - 1;
 
 const damp = (current: number, target: number, lambda: number, dt: number) =>
   THREE.MathUtils.lerp(current, target, 1 - Math.exp(-lambda * dt));
 
-/**
- * Seeded PRNG (mulberry32). The particle field is generated during render, so
- * it has to be deterministic — the same seed gives the same corridor on every
- * render, on every reload, for every visitor.
- */
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+/** Which pair of stations the journey is between, and how far across. */
+function leg(station: number) {
+  const s = THREE.MathUtils.clamp(station, 0, LAST);
+  const from = Math.min(Math.floor(s), LAST - 1);
+  return { from, mix: THREE.MathUtils.smoothstep(s - from, HOLD, 1) };
 }
 
-/**
- * A radial falloff painted once into a canvas. Points and sprites sample it so
- * they read as soft glows instead of hard squares — the single biggest
- * difference between "particles" and "light".
- */
-function makeGlow(): THREE.CanvasTexture | null {
-  if (typeof document === "undefined") return null;
-  const size = 128;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-
-  const gradient = ctx.createRadialGradient(
-    size / 2,
-    size / 2,
-    0,
-    size / 2,
-    size / 2,
-    size / 2,
-  );
-  gradient.addColorStop(0, "rgba(255,255,255,1)");
-  gradient.addColorStop(0.18, "rgba(255,255,255,0.75)");
-  gradient.addColorStop(0.45, "rgba(255,255,255,0.22)");
-  gradient.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, size, size);
-
-  return new THREE.CanvasTexture(canvas);
-}
-
-/** The four theme tones, in the order the corridor cycles through them. */
-const palette = (colors: ThemeColors) => [
-  colors.accent,
-  colors.cyan,
-  colors.violet,
-  colors.mint,
-];
-
-/* ── Drifting particle shell ────────────────────────────────────────────────
-   A hollow cylinder of points the camera flies through. Sized so the corridor
-   reads as depth rather than as a wall of dots. Every point takes one of the
-   four theme tones, so the field shimmers rather than sitting in one colour. */
-function Drift({
-  colors,
-  quality,
-  still,
-  glow,
-}: Omit<SceneProps, "input"> & Glow) {
-  const ref = useRef<THREE.Points>(null);
-  const count = quality === "high" ? 3600 : 1300;
-
-  const { positions, tints } = useMemo(() => {
-    const random = rng(0x5eed1234);
-    const arr = new Float32Array(count * 3);
-    const rgb = new Float32Array(count * 3);
-    const tones = palette(colors).map((hex) => new THREE.Color(hex));
-
-    for (let i = 0; i < count; i++) {
-      const angle = random() * Math.PI * 2;
-      const radius = 5.5 + random() * 13;
-      arr[i * 3] = Math.cos(angle) * radius;
-      arr[i * 3 + 1] = Math.sin(angle) * radius * 0.62;
-      arr[i * 3 + 2] = 10 - random() * (JOURNEY_DEPTH + 26);
-
-      // Weighted toward the accent so the corridor still has a lead colour.
-      const pick = random();
-      const tone =
-        tones[pick < 0.45 ? 0 : pick < 0.68 ? 1 : pick < 0.87 ? 2 : 3];
-      // A little brightness jitter keeps the field from banding.
-      const lift = 0.72 + random() * 0.45;
-      rgb[i * 3] = tone.r * lift;
-      rgb[i * 3 + 1] = tone.g * lift;
-      rgb[i * 3 + 2] = tone.b * lift;
-    }
-    return { positions: arr, tints: rgb };
-  }, [count, colors]);
-
-  useFrame((_, dt) => {
-    if (still || !ref.current) return;
-    ref.current.rotation.z += dt * 0.012;
-  });
-
-  return (
-    <points ref={ref}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[tints, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.16}
-        sizeAttenuation
-        vertexColors
-        map={glow ?? undefined}
-        alphaMap={glow ?? undefined}
-        transparent
-        opacity={0.95}
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-      />
-    </points>
-  );
-}
-
-/* ── Signal ribbons ─────────────────────────────────────────────────────────
-   Tubes braided down the length of the corridor, one per theme tone. They are
-   the spine of the journey: whatever else changes, these keep running forward. */
-function Ribbons({
-  colors,
-  quality,
-  still,
-}: Pick<SceneProps, "colors" | "quality" | "still">) {
-  const group = useRef<THREE.Group>(null);
-  const tones = palette(colors);
-  const count = quality === "high" ? 5 : 3;
-  const segments = quality === "high" ? 220 : 110;
-
-  const geometries = useMemo(() => {
-    return Array.from({ length: count }, (_, k) => {
-      const points: THREE.Vector3[] = [];
-      for (let i = 0; i <= 48; i++) {
-        const t = i / 48;
-        points.push(
-          new THREE.Vector3(
-            Math.sin(t * Math.PI * 3 + k * 2.1) * (2.6 + k * 1.1),
-            Math.cos(t * Math.PI * 2.2 + k * 1.3) * (1.7 + k * 0.6) - 0.6,
-            10 - t * (JOURNEY_DEPTH + 22),
-          ),
-        );
-      }
-      const curve = new THREE.CatmullRomCurve3(points);
-      return new THREE.TubeGeometry(curve, segments, 0.052, 7, false);
-    });
-  }, [segments, count]);
-
-  useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
-
-  // A slow counter-rotation against the particle shell: the braid reads as
-  // motion even when the page is not scrolling.
-  useFrame((_, dt) => {
-    if (still || !group.current) return;
-    group.current.rotation.z += dt * 0.018;
-  });
-
-  return (
-    <group ref={group}>
-      {geometries.map((geometry, i) => (
-        <mesh key={i} geometry={geometry}>
-          <meshBasicMaterial
-            color={tones[i % tones.length]}
-            transparent
-            opacity={0.62}
-            depthWrite={false}
-            blending={THREE.AdditiveBlending}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-/* ── Nebula ─────────────────────────────────────────────────────────────────
-   Broad colour washes hung along the corridor, one tone per station. They do
-   almost nothing geometrically and almost everything for how the scene reads:
-   without them the corridor is monochrome line-work on a flat background. */
-function Nebula({
-  colors,
-  glow,
-  still,
-}: Pick<SceneProps, "colors" | "still"> & Glow) {
-  const group = useRef<THREE.Group>(null);
-  const tones = palette(colors);
-
-  const clouds = useMemo(() => {
-    const random = rng(0xc10d5eed);
-    return STATIONS.map((station, i) => ({
-      id: station.id,
-      tone: tones[i % tones.length],
-      position: [
-        (random() * 2 - 1) * 13,
-        (random() * 2 - 1) * 7,
-        -i * STATION_GAP - 6,
-      ] as [number, number, number],
-      scale: 20 + random() * 16,
-      phase: random() * Math.PI * 2,
-    }));
-    // Tones are read through the closure; the station layout itself is static.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+/** Additive light vanishes on a pale page, so the light theme draws in ink. */
+function usePalette(colors: ThemeColors) {
+  return useMemo(() => {
+    const bg = new THREE.Color(colors.bg);
+    const light = bg.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5;
+    const tone = {
+      accent: new THREE.Color(colors.accent),
+      violet: new THREE.Color(colors.violet),
+      cyan: new THREE.Color(colors.cyan),
+      mint: new THREE.Color(colors.mint),
+    };
+    return {
+      light,
+      tone,
+      stations: STATIONS.map((station) => tone[station.tone]),
+      star: new THREE.Color(light ? colors.accent : colors.text),
+      blending: light ? THREE.NormalBlending : THREE.AdditiveBlending,
+    };
   }, [colors]);
-
-  // Gentle breathing so the washes never look like a static gradient overlay.
-  useFrame((state) => {
-    if (still || !group.current) return;
-    const t = state.clock.elapsedTime;
-    group.current.children.forEach((child, i) => {
-      const sprite = child as THREE.Sprite;
-      const material = sprite.material as THREE.SpriteMaterial;
-      material.opacity = 0.16 + Math.sin(t * 0.35 + clouds[i].phase) * 0.06;
-    });
-  });
-
-  if (!glow) return null;
-
-  return (
-    <group ref={group}>
-      {clouds.map((cloud) => (
-        <sprite
-          key={cloud.id}
-          position={cloud.position}
-          scale={[cloud.scale, cloud.scale, 1]}
-        >
-          <spriteMaterial
-            map={glow}
-            color={cloud.tone}
-            transparent
-            opacity={0.16}
-            depthWrite={false}
-            // Fog would mix these back toward the background and cancel the
-            // whole point of them; distance is already read from the geometry.
-            fog={false}
-            blending={THREE.AdditiveBlending}
-          />
-        </sprite>
-      ))}
-    </group>
-  );
 }
 
-/* ── Station gates ──────────────────────────────────────────────────────────
-   One ring per page section, lit by proximity. Passing through a ring is the
-   moment a new section takes over the screen. Each gate is two rings in
-   contrasting tones so the colour shifts as you travel through it. */
-function Gates({ colors, still }: Pick<SceneProps, "colors" | "still">) {
-  const group = useRef<THREE.Group>(null);
-  const materials = useRef<THREE.MeshBasicMaterial[]>([]);
-  const tones = palette(colors);
+/** Pixels one world unit covers at one unit of distance — sizes points in world space. */
+const pixelsPerUnit = (state: RootState) =>
+  (state.size.height * state.viewport.dpr) /
+  (2 * Math.tan(THREE.MathUtils.degToRad((state.camera as THREE.PerspectiveCamera).fov) / 2));
 
-  const toneFor = (tone: string) =>
-    tone === "violet"
-      ? colors.violet
-      : tone === "cyan"
-        ? colors.cyan
-        : tone === "mint"
-          ? colors.mint
-          : colors.accent;
-
-  useFrame((state, dt) => {
-    const camZ = state.camera.position.z;
-    materials.current.forEach((material, i) => {
-      if (!material) return;
-      const distance = Math.abs(camZ - -Math.floor(i / 2) * STATION_GAP);
-      // Bright at the ring, fading out well before it reaches the fog.
-      const target = THREE.MathUtils.clamp(1 - distance / 26, 0.06, 1);
-      // Odd indices are the inner ring; it sits a touch behind the outer one.
-      const peak = i % 2 === 0 ? target : target * 0.7;
-      material.opacity = still ? peak : damp(material.opacity, peak, 4, dt);
-    });
-    if (!still && group.current) group.current.rotation.z -= dt * 0.03;
-  });
-
-  return (
-    <group ref={group}>
-      {STATIONS.map((station, i) => (
-        <group
-          key={station.id}
-          position={[0, 0, -i * STATION_GAP]}
-          rotation={[0, 0, (i * Math.PI) / 7]}
-        >
-          <mesh>
-            <torusGeometry args={[6.4, 0.06, 6, 96]} />
-            <meshBasicMaterial
-              ref={(m: THREE.MeshBasicMaterial | null) => {
-                if (m) materials.current[i * 2] = m;
-              }}
-              color={toneFor(station.tone)}
-              transparent
-              opacity={0.2}
-              depthWrite={false}
-              blending={THREE.AdditiveBlending}
-            />
-          </mesh>
-          <mesh rotation={[0, 0, 0.4]}>
-            <torusGeometry args={[5.1, 0.035, 6, 80]} />
-            <meshBasicMaterial
-              ref={(m: THREE.MeshBasicMaterial | null) => {
-                if (m) materials.current[i * 2 + 1] = m;
-              }}
-              color={tones[(i + 2) % tones.length]}
-              transparent
-              opacity={0.15}
-              depthWrite={false}
-              blending={THREE.AdditiveBlending}
-            />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
-}
-
-/* ── The core ───────────────────────────────────────────────────────────────
-   Sits at the mouth of the corridor behind the hero, then falls away as the
-   journey starts. */
-function Core({ colors }: Pick<SceneProps, "colors">) {
-  const group = useRef<THREE.Group>(null);
-  const width = useThree((state) => state.size.width);
-  // Narrow viewports put the copy across the full width, so the core moves up
-  // and back rather than sitting behind the paragraph.
-  const compact = width < 900;
-  const position: [number, number, number] = compact
-    ? [0.8, 5, -15]
-    : [3.4, 0.6, -7.5];
-  const baseScale = compact ? 0.75 : 1;
-
-  useFrame((state, dt) => {
-    if (!group.current) return;
-    group.current.rotation.y += dt * 0.16;
-    group.current.rotation.x += dt * 0.05;
-    // Shrink out of the way once the camera has left the first station.
-    const travelled = THREE.MathUtils.clamp(
-      (CAMERA_START_Z - state.camera.position.z) / 20,
-      0,
-      1,
-    );
-    group.current.scale.setScalar(baseScale * (1 - travelled * 0.55));
-  });
-
-  return (
-    <group ref={group} position={position}>
-      <mesh>
-        <icosahedronGeometry args={[3, 1]} />
-        <meshBasicMaterial
-          color={colors.cyan}
-          wireframe
-          transparent
-          opacity={0.62}
-          depthWrite={false}
-        />
-      </mesh>
-      <mesh scale={1.22}>
-        <icosahedronGeometry args={[3, 0]} />
-        <meshBasicMaterial
-          color={colors.violet}
-          wireframe
-          transparent
-          opacity={0.3}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
-      <mesh>
-        <icosahedronGeometry args={[1.7, 0]} />
-        <meshStandardMaterial
-          color={colors.violet}
-          emissive={colors.accent}
-          emissiveIntensity={0.9}
-          flatShading
-          roughness={0.35}
-          metalness={0.15}
-          transparent
-          opacity={0.45}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-/* ── Floor ──────────────────────────────────────────────────────────────────
-   A ground plane is what makes forward motion legible; without it the corridor
-   reads as drifting rather than travelling. */
-function Floor({ colors }: Pick<SceneProps, "colors">) {
-  const grid = useMemo(() => {
-    const helper = new THREE.GridHelper(300, 96, colors.cyan, colors.violet);
-    const material = helper.material as THREE.Material;
-    material.transparent = true;
-    material.opacity = 0.2;
-    material.depthWrite = false;
-    return helper;
-  }, [colors.cyan, colors.violet]);
-
-  useEffect(() => () => grid.dispose(), [grid]);
-
-  return <primitive object={grid} position={[0, -7.5, -JOURNEY_DEPTH / 2]} />;
-}
-
-/* ── Camera rig ─────────────────────────────────────────────────────────────
-   Scroll drives depth; the pointer adds a small parallax lean. The camera
-   never looks anywhere but forward, so the corridor stays readable. */
-function Rig({ input, still }: Pick<SceneProps, "input" | "still">) {
+/* ── Pilot ──────────────────────────────────────────────────────────────────
+   Turns scroll and pointer into the flight state, and leans the camera a
+   little toward the pointer. Mounted first so every layer below reads this
+   frame's values rather than last frame's. */
+function Pilot({ input, flightRef, still }: Pick<SceneProps, "input" | "still"> & { flightRef: RefObject<Flight> }) {
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
-    const { progress, px, py } = input.current;
+    const f = flightRef.current;
+    const { y, station, px, py } = input.current;
     const camera = state.camera;
 
-    // Reduced motion: hold a fixed view of the corridor mouth. The scene is
-    // still there to look at, it just never moves.
+    // Reduced motion: one fixed view of the first figure, already formed.
     if (still) {
-      camera.position.set(0, 0.2, CAMERA_START_Z);
+      f.station = 0;
+      f.velocity = 0;
+      f.intro = 1;
+      camera.position.set(0, 0.2, CAMERA_Z);
       camera.rotation.set(0, 0, 0);
       return;
     }
 
-    const targetZ = CAMERA_START_Z - progress * JOURNEY_TRAVEL;
+    if (f.lastY === null) f.station = station;
+    const speed = f.lastY === null ? 0 : (y - f.lastY) / dt;
+    f.lastY = y;
 
-    camera.position.z = damp(camera.position.z, targetZ, 3.2, dt);
-    camera.position.x = damp(camera.position.x, px * 1.1, 1.8, dt);
-    camera.position.y = damp(camera.position.y, 0.2 - py * 0.7, 1.8, dt);
-    camera.rotation.y = damp(camera.rotation.y, -px * 0.05, 1.8, dt);
-    camera.rotation.x = damp(camera.rotation.x, py * 0.03, 1.8, dt);
-    camera.rotation.z = damp(camera.rotation.z, px * 0.02, 1.8, dt);
+    f.velocity = damp(f.velocity, THREE.MathUtils.clamp(speed, -5, 5), 5, dt);
+    f.station = damp(f.station, station, 3.2, dt);
+    f.travel = (f.travel + dt * (0.45 + f.velocity * 7)) % STAR_DEPTH;
+    f.intro = Math.min(1, f.intro + dt / INTRO_SECONDS);
+
+    camera.position.x = damp(camera.position.x, px * 0.5, 1.6, dt);
+    camera.position.y = damp(camera.position.y, 0.2 - py * 0.35, 1.6, dt);
+    camera.rotation.y = damp(camera.rotation.y, -px * 0.025, 1.6, dt);
+    camera.rotation.x = damp(camera.rotation.x, py * 0.018, 1.6, dt);
   });
 
   return null;
 }
 
-export function JourneyScene({ input, colors, quality, still }: SceneProps) {
-  const glow = useMemo(makeGlow, []);
-  useEffect(() => () => glow?.dispose(), [glow]);
+/* ── Nebula ─────────────────────────────────────────────────────────────────
+   Domain-warped noise, which is what gives gas its folded, drifting look. It
+   is also the most expensive thing here per pixel, and it has no fine detail,
+   so it is drawn into a small off-screen buffer and stretched over the view. */
+const NEBULA_ROWS = 216;
+
+type Buffer = {
+  target: THREE.WebGLRenderTarget;
+  scene: THREE.Scene;
+  camera: THREE.Camera;
+  material: THREE.ShaderMaterial;
+  dispose: () => void;
+};
+
+function createBuffer(): Buffer {
+  const material = new THREE.ShaderMaterial({
+    vertexShader: SCREEN_VERTEX,
+    fragmentShader: NEBULA_FRAGMENT,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: {
+      uTime: { value: 0 },
+      uAspect: { value: 1 },
+      uShift: { value: new THREE.Vector2() },
+      uFocus: { value: new THREE.Vector2(0.5, 0.5) },
+      uDeep: { value: new THREE.Color() },
+      uTone: { value: new THREE.Color() },
+      uGlow: { value: new THREE.Color() },
+      uHot: { value: new THREE.Color() },
+    },
+  });
+  const geometry = new THREE.PlaneGeometry(2, 2);
+  const scene = new THREE.Scene();
+  scene.add(new THREE.Mesh(geometry, material));
+  const target = new THREE.WebGLRenderTarget(NEBULA_ROWS, NEBULA_ROWS, { depthBuffer: false });
+
+  return {
+    target,
+    scene,
+    camera: new THREE.Camera(),
+    material,
+    dispose: () => {
+      target.dispose();
+      geometry.dispose();
+      material.dispose();
+    },
+  };
+}
+
+function Nebula({ colors, still, flightRef }: Layer) {
+  const screen = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>>(null);
+  const buffer = useRef<Buffer | null>(null);
+  const palette = usePalette(colors);
+
+  const uniforms = useMemo(
+    () => ({ uMap: { value: null as THREE.Texture | null }, uOpacity: { value: 0 } }),
+    [],
+  );
+
+  // Built on the first frame rather than in an effect, so that a scene which
+  // only ever renders one still frame has it in time. Torn down with the layer.
+  useEffect(
+    () => () => {
+      buffer.current?.dispose();
+      buffer.current = null;
+    },
+    [],
+  );
+
+  useFrame((state) => {
+    const mesh = screen.current;
+    if (!mesh) return;
+    const b = (buffer.current ??= createBuffer());
+
+    const f = flightRef.current;
+    const aspect = state.size.width / state.size.height;
+    const columns = Math.min(Math.round(NEBULA_ROWS * aspect), 640);
+    if (b.target.width !== columns) b.target.setSize(columns, NEBULA_ROWS);
+
+    const { from, mix } = leg(f.station);
+    const u = b.material.uniforms;
+    u.uTime.value = still ? 0 : state.clock.elapsedTime;
+    u.uAspect.value = aspect;
+    // The gas slides past more slowly than the stars: it is further away.
+    u.uShift.value.set(state.camera.position.x * 0.04, -f.station * 0.22);
+    u.uFocus.value.set(f.focusX, f.focusY);
+    u.uTone.value.copy(palette.stations[from]).lerp(palette.stations[from + 1], mix);
+    u.uDeep.value.copy(palette.tone.accent).multiplyScalar(palette.light ? 0.9 : 0.32);
+    u.uGlow.value.copy(palette.tone.cyan);
+    u.uHot.value.copy(palette.tone.violet);
+
+    state.gl.setRenderTarget(b.target);
+    state.gl.render(b.scene, b.camera);
+    state.gl.setRenderTarget(null);
+
+    mesh.material.uniforms.uMap.value = b.target.texture;
+    mesh.material.uniforms.uOpacity.value = (palette.light ? 0.3 : 0.62) * (0.35 + 0.65 * f.intro);
+  });
+
+  return (
+    <mesh ref={screen} frustumCulled={false} renderOrder={-10}>
+      <planeGeometry args={[2, 2]} />
+      <shaderMaterial
+        vertexShader={SCREEN_VERTEX}
+        fragmentShader={SCREEN_FRAGMENT}
+        uniforms={uniforms}
+        transparent
+        depthTest={false}
+        depthWrite={false}
+      />
+    </mesh>
+  );
+}
+
+/* ── Star field ─────────────────────────────────────────────────────────────
+   Distant stars the page flies through. They never run out: each one wraps
+   back to the far end once it passes the camera. Scroll speed stretches them
+   into streaks, so a fast scroll reads as a jump between stations. */
+function Stars({ colors, quality, still, flightRef }: Layer) {
+  const points = useRef<THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
+  const streaks = useRef<THREE.LineSegments<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
+  const palette = usePalette(colors);
+  const count = quality === "high" ? 1500 : 700;
+
+  const { heads, tails } = useMemo(() => {
+    const random = rng(0x57a125);
+    const position = new Float32Array(count * 3);
+    const seed = new Float32Array(count * 4);
+    for (let i = 0; i < count; i++) {
+      // Kept off the axis: a star passing straight through the lens is a flash.
+      const angle = random() * Math.PI * 2;
+      const radius = 2.5 + Math.sqrt(random()) * 27;
+      position[i * 3] = Math.cos(angle) * radius;
+      position[i * 3 + 1] = Math.sin(angle) * radius * 0.6;
+      position[i * 3 + 2] = -random() * STAR_DEPTH;
+      for (let k = 0; k < 4; k++) seed[i * 4 + k] = random();
+    }
+
+    // A streak is the same star twice: one end stays put, the other trails.
+    const pairPosition = new Float32Array(count * 6);
+    const pairSeed = new Float32Array(count * 8);
+    const end = new Float32Array(count * 2);
+    for (let i = 0; i < count; i++) {
+      pairPosition.set(position.subarray(i * 3, i * 3 + 3), i * 6);
+      pairPosition.set(position.subarray(i * 3, i * 3 + 3), i * 6 + 3);
+      pairSeed.set(seed.subarray(i * 4, i * 4 + 4), i * 8);
+      pairSeed.set(seed.subarray(i * 4, i * 4 + 4), i * 8 + 4);
+      end[i * 2 + 1] = 1;
+    }
+    return {
+      heads: { position, seed },
+      tails: { position: pairPosition, seed: pairSeed, end },
+    };
+  }, [count]);
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uTravel: { value: 0 },
+      uStretch: { value: 0 },
+      uDepth: { value: STAR_DEPTH },
+      uNear: { value: CAMERA_Z - 1 },
+      uPixels: { value: 1 },
+      uOpacity: { value: 0 },
+      uStar: { value: new THREE.Color() },
+      uTint: { value: new THREE.Color() },
+    }),
+    [],
+  );
+
+  useFrame((state) => {
+    const f = flightRef.current;
+    const { from, mix } = leg(f.station);
+    for (const object of [points.current, streaks.current]) {
+      if (!object) continue;
+      const u = object.material.uniforms;
+      u.uTime.value = still ? 0 : state.clock.elapsedTime;
+      u.uTravel.value = f.travel;
+      u.uStretch.value = f.velocity * 1.5;
+      u.uPixels.value = pixelsPerUnit(state);
+      u.uOpacity.value = (palette.light ? 0.5 : 1) * f.intro;
+      u.uStar.value.copy(palette.star);
+      u.uTint.value.copy(palette.stations[from]).lerp(palette.stations[from + 1], mix);
+    }
+  });
 
   return (
     <>
-      {/* Pushed back from the original 14 so the colour washes survive the haze. */}
-      <fog attach="fog" args={[colors.bg, 20, 62]} />
-      <ambientLight intensity={0.7} />
-      <pointLight position={[6, 6, 4]} intensity={45} color={colors.cyan} />
-      <pointLight
-        position={[-7, -3, -6]}
-        intensity={40}
-        color={colors.violet}
+      <points ref={points} frustumCulled={false}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[heads.position, 3]} />
+          <bufferAttribute attach="attributes-aSeed" args={[heads.seed, 4]} />
+        </bufferGeometry>
+        <shaderMaterial
+          vertexShader={STAR_VERTEX}
+          fragmentShader={STAR_FRAGMENT}
+          uniforms={uniforms}
+          transparent
+          depthWrite={false}
+          blending={palette.blending}
+        />
+      </points>
+      {!still && (
+        <lineSegments ref={streaks} frustumCulled={false}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[tails.position, 3]} />
+            <bufferAttribute attach="attributes-aSeed" args={[tails.seed, 4]} />
+            <bufferAttribute attach="attributes-aEnd" args={[tails.end, 1]} />
+          </bufferGeometry>
+          <shaderMaterial
+            vertexShader={STAR_VERTEX}
+            fragmentShader={STAR_FRAGMENT}
+            uniforms={uniforms}
+            defines={{ STREAK: "" }}
+            transparent
+            depthWrite={false}
+            blending={palette.blending}
+          />
+        </lineSegments>
+      )}
+    </>
+  );
+}
+
+/* ── Constellation ──────────────────────────────────────────────────────────
+   The centrepiece: one set of stars that gathers into a different figure for
+   every section. Only two figures are ever bound — the one being left and the
+   one being approached — and the vertex shader blends between them, so the
+   regrouping costs the CPU nothing however many stars there are. */
+
+/**
+ * Where the figure hangs, as a share of the half-view: [across, up]. The upper
+ * right is the one part of the screen every section leaves clear — headings
+ * run left, cards start lower — so the figure is never fighting the copy.
+ * Alternate stations sit a touch apart so a regrouping also travels.
+ */
+const ANCHORS: [number, number][] = [
+  [0.56, 0.5],
+  [0.5, 0.46],
+];
+
+function Constellation({ colors, quality, still, flightRef }: Layer) {
+  const points = useRef<THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
+  const bound = useRef(-1);
+  const palette = usePalette(colors);
+  const count = quality === "high" ? 7200 : 3400;
+
+  const figures = useMemo(
+    () => buildFormations(count).map((array) => new THREE.BufferAttribute(array, 3)),
+    [count],
+  );
+
+  const geometry = useMemo(() => {
+    const random = rng(0x5eed1234);
+    const seed = new Float32Array(count * 4);
+    for (let i = 0; i < seed.length; i++) seed[i] = random();
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("aSeed", new THREE.BufferAttribute(seed, 4));
+    return g;
+  }, [count]);
+
+  useEffect(() => {
+    bound.current = -1;
+    return () => geometry.dispose();
+  }, [geometry]);
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uMix: { value: 0 },
+      uIntro: { value: 0 },
+      uWarp: { value: 0 },
+      uPixels: { value: 1 },
+      uLight: { value: 0 },
+      uTone: { value: new THREE.Color() },
+      uAlt: { value: new THREE.Color() },
+      uCore: { value: new THREE.Color() },
+    }),
+    [],
+  );
+
+  const anchorRef = useRef<THREE.Vector3 | null>(null);
+
+  useFrame((state) => {
+    const object = points.current;
+    if (!object) return;
+
+    const f = flightRef.current;
+    const { from, mix } = leg(f.station);
+    const t = still ? 0 : state.clock.elapsedTime;
+
+    if (bound.current !== from) {
+      bound.current = from;
+      object.geometry.setAttribute("position", figures[from]);
+      object.geometry.setAttribute("aTo", figures[from + 1]);
+    }
+
+    // The view at the figure's distance, so layout is in screen terms and the
+    // figure shrinks to fit a narrow window instead of running off its edge.
+    const distance = CAMERA_Z - FIGURE_Z;
+    const halfHeight = distance * Math.tan(THREE.MathUtils.degToRad(31));
+    const halfWidth = halfHeight * (state.size.width / state.size.height);
+    const [ax, ay] = ANCHORS[from % 2];
+    const [bx, by] = ANCHORS[(from + 1) % 2];
+    object.position.set(
+      THREE.MathUtils.lerp(ax, bx, mix) * halfWidth,
+      THREE.MathUtils.lerp(ay, by, mix) * halfHeight,
+      FIGURE_Z,
+    );
+    object.scale.setScalar(THREE.MathUtils.clamp(halfWidth / 15.5, 0.46, 0.74));
+
+    // A slow sway plus a lean toward the pointer: enough to show the figure
+    // has depth without ever turning it far enough to stop reading.
+    const lean = state.camera.position.x / 0.5;
+    object.rotation.y = Math.sin(t * 0.21) * 0.2 + lean * 0.22;
+    object.rotation.x = Math.sin(t * 0.16) * 0.06 - (state.camera.position.y - 0.2) * 0.3;
+
+    const anchor = (anchorRef.current ??= new THREE.Vector3());
+    anchor.copy(object.position).project(state.camera);
+    f.focusX = anchor.x * 0.5 + 0.5;
+    f.focusY = anchor.y * 0.5 + 0.5;
+
+    const u = object.material.uniforms;
+    u.uTime.value = t;
+    u.uMix.value = mix;
+    u.uIntro.value = f.intro;
+    u.uWarp.value = Math.min(Math.abs(f.velocity) / 3, 1);
+    u.uPixels.value = pixelsPerUnit(state);
+    u.uLight.value = palette.light ? 1 : 0;
+    u.uTone.value.copy(palette.stations[from]).lerp(palette.stations[from + 1], mix);
+    u.uAlt.value.copy(from % 2 ? palette.tone.cyan : palette.tone.violet);
+    u.uCore.value.copy(palette.star);
+  });
+
+  return (
+    <points ref={points} geometry={geometry} frustumCulled={false}>
+      <shaderMaterial
+        vertexShader={CONSTELLATION_VERTEX}
+        fragmentShader={CONSTELLATION_FRAGMENT}
+        uniforms={uniforms}
+        transparent
+        depthWrite={false}
+        depthTest={false}
+        blending={palette.blending}
       />
-      <pointLight position={[0, 4, -22]} intensity={35} color={colors.mint} />
-      <Rig input={input} still={still} />
-      <Nebula colors={colors} glow={glow} still={still} />
-      <Drift colors={colors} quality={quality} still={still} glow={glow} />
-      <Ribbons colors={colors} quality={quality} still={still} />
-      <Gates colors={colors} still={still} />
-      {/* The core spins; with motion reduced the corridor stands on its own. */}
-      {!still && <Core colors={colors} />}
-      <Floor colors={colors} />
+    </points>
+  );
+}
+
+export function JourneyScene({ input, colors, quality, still }: SceneProps) {
+  const flightRef = useRef<Flight>({
+    station: 0,
+    velocity: 0,
+    travel: 0,
+    intro: still ? 1 : 0,
+    lastY: null,
+    focusX: 0.5,
+    focusY: 0.5,
+  });
+
+  return (
+    <>
+      <Pilot input={input} flightRef={flightRef} still={still} />
+      <Nebula colors={colors} quality={quality} still={still} flightRef={flightRef} />
+      <Stars colors={colors} quality={quality} still={still} flightRef={flightRef} />
+      <Constellation colors={colors} quality={quality} still={still} flightRef={flightRef} />
     </>
   );
 }

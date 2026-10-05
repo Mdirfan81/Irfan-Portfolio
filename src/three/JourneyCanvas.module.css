@@ -12,12 +12,12 @@
 }
 
 /* Two jobs: hold text contrast over a moving scene, and darken the edges so the
-   corridor reads as depth rather than as a flat wallpaper. */
+   star field reads as depth rather than as a flat wallpaper. */
 .scrim {
   position: absolute;
   inset: 0;
-  /* A flat wash for legibility, plus a vignette so the corridor reads as depth
-     rather than as wallpaper. Kept light enough that the scene still shows. */
+  /* A flat wash for legibility, plus a vignette. Kept light enough that the
+     scene still shows. */
   background:
     radial-gradient(
       110% 75% at 50% 50%,
