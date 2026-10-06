@@ -9,7 +9,9 @@ import {
 } from 'lucide-react'
 import { skillGroups } from '@/data/skills'
 import { TiltCard } from '@/components/TiltCard'
-import { RevealGroup, RevealItem } from '@/components/Reveal'
+import { Flow } from '@/components/Flow'
+import { Marquee } from '@/components/Marquee'
+import { flowPart } from '@/lib/flow'
 import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import styles from './Skills.module.css'
 
@@ -51,11 +53,11 @@ export function Skills() {
           once.
         </FadeText>
 
-        <RevealGroup className={styles.grid} stagger={0.06}>
+        <div className={styles.grid}>
           {skillGroups.map((group) => {
             const Icon = ICONS[group.id] ?? Blocks
             return (
-              <RevealItem key={group.id}>
+              <Flow key={group.id}>
                 <TiltCard className={styles.card} intensity={5}>
                   <div className={styles.head}>
                     <span className={styles.icon} aria-hidden="true">
@@ -65,29 +67,24 @@ export function Skills() {
                   </div>
                   <p className={styles.blurb}>{group.blurb}</p>
                   <ul className={styles.tags}>
-                    {group.items.map((item) => (
-                      <li key={item.name} className={`chip ${item.core ? 'chip--core' : ''}`}>
+                    {group.items.map((item, i) => (
+                      <li
+                        key={item.name}
+                        className={`chip flow-part ${item.core ? 'chip--core' : ''}`}
+                        style={flowPart(i)}
+                      >
                         {item.name}
                       </li>
                     ))}
                   </ul>
                 </TiltCard>
-              </RevealItem>
+              </Flow>
             )
           })}
-        </RevealGroup>
-      </div>
-
-      <div className={styles.marquee} aria-hidden="true">
-        <div className={styles.track}>
-          {[...MARQUEE, ...MARQUEE].map((item, i) => (
-            <span className={styles.tick} key={`${item}-${i}`}>
-              <span className={styles.tickDot} />
-              {item}
-            </span>
-          ))}
         </div>
       </div>
+
+      <Marquee items={MARQUEE} />
     </section>
   )
 }

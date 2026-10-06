@@ -52,7 +52,7 @@ src/
   styles/global.css     Reset, layout primitives, shared .btn / .chip / .glass.
   data/                 All site content. Edit here, not in components.
   lib/                  Hooks: theme, active section, count-up, hash scroll, motion variants.
-  components/           Nav, StationRail, Backdrop, AuroraBackground, TiltCard, Reveal, ScrollProgress.
+  components/           Nav, StationRail, Backdrop, AuroraBackground, TiltCard, Flow, Reveal, Marquee, ScrollProgress.
   three/                The journey: stations, scene, canvas wrapper, performance guard.
   sections/             One file per page section, each with its own CSS module.
   routes/               Home and NotFound.
@@ -120,13 +120,29 @@ mounts, and stays off below 768px, where the CSS aurora is the whole backdrop.
 
 ## Motion
 
-Three DOM layers on top of the scene, all opacity/transform only:
+Four DOM layers on top of the scene, all opacity/transform only:
 
 1. **Ambient** — drifting aurora blooms and a pointer-tracked spotlight that
    write CSS custom properties directly, so mouse movement never re-renders React.
-2. **Entrance** — `Reveal` / `RevealGroup` fade and lift content once as it enters view.
-3. **Interaction** — `TiltCard` perspective tilt on Motion springs, the shared
-   layout pill in the nav and project filters, and the count-up on impact figures.
+2. **Scroll flow** — cards, list items and panels arrive and leave in step with
+   the scroll instead of playing once. `lib/flow.ts` is the whole engine: one
+   scroll listener and one frame loop work out, for every `Flow` element, how
+   far it has come in, how far it has gone out and how far the reading line is
+   through it, and write those as `--flow-in`, `--flow-out` and
+   `--flow-through`. CSS in `global.css` turns the numbers into movement, so a
+   component chooses how it flows with a class (`rise`, `left`, `zoom`,
+   `step`) or by reading the properties itself — the experience spine, the
+   timeline nodes and the metric meters all do. Elements further right lag a
+   little, which staggers a grid by where its cards actually are.
+3. **Entrance** — headings split into words that rise out of a mask, eyebrows
+   that draw their rule, and `Reveal` for the few things that still play once.
+4. **Interaction** — `TiltCard` perspective tilt on Motion springs, the shared
+   layout pill in the nav and project filters, the count-up on impact figures,
+   and a skills marquee whose pace and direction follow the scroll.
+
+The header starts as a full-width bar and draws in to a floating glass capsule
+once the page moves; the caption under the name then tracks the section on
+screen.
 
 Every one of those checks `useReducedMotion()`, and `global.css` collapses
 durations under `prefers-reduced-motion: reduce`. The unit suite runs with

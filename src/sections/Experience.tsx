@@ -1,9 +1,13 @@
 import { experience } from '@/data/experience'
-import { Reveal } from '@/components/Reveal'
+import { Flow } from '@/components/Flow'
+import { useFlow } from '@/lib/flow'
 import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import styles from './Experience.module.css'
 
 export function Experience() {
+  // The spine draws itself down the list as the reading line passes each role.
+  const timeline = useFlow<HTMLOListElement>()
+
   return (
     <section className="section" id="experience" aria-labelledby="experience-title">
       <div className="shell">
@@ -14,44 +18,42 @@ export function Experience() {
           automation group in Dubai.
         </FadeText>
 
-        <ol className={styles.timeline}>
-          {experience.map((role, i) => (
-            <li className={styles.row} key={role.id}>
+        <ol className={styles.timeline} ref={timeline}>
+          {experience.map((role) => (
+            <Flow as="li" kind="none" className={styles.row} key={role.id}>
               <span
                 className={`${styles.node} ${role.current ? styles.nodeCurrent : ''}`}
                 aria-hidden="true"
               />
-              <Reveal delay={i * 0.04}>
-                <article className={`glass ${styles.card}`}>
-                  <div className={styles.head}>
-                    <h3 className={styles.company}>{role.company}</h3>
-                    <span className={styles.period}>{role.period}</span>
-                  </div>
+              <Flow as="article" className={`glass ${styles.card}`}>
+                <div className={styles.head}>
+                  <h3 className={styles.company}>{role.company}</h3>
+                  <span className={styles.period}>{role.period}</span>
+                </div>
 
-                  <div className={styles.meta}>
-                    <span className={styles.title}>{role.title}</span>
-                    <span className={styles.location}>{role.location}</span>
-                    {role.current && <span className={styles.badge}>Current</span>}
-                  </div>
+                <div className={styles.meta}>
+                  <span className={styles.title}>{role.title}</span>
+                  <span className={styles.location}>{role.location}</span>
+                  {role.current && <span className={styles.badge}>Current</span>}
+                </div>
 
-                  <ul className={styles.bullets}>
-                    {role.bullets.map((b) => (
-                      <li className={styles.bullet} key={b}>
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
+                <ul className={styles.bullets}>
+                  {role.bullets.map((b) => (
+                    <Flow as="li" kind="step" className={styles.bullet} key={b}>
+                      {b}
+                    </Flow>
+                  ))}
+                </ul>
 
-                  <ul className={styles.stack}>
-                    {role.stack.map((s) => (
-                      <li className="chip chip--mono" key={s}>
-                        {s}
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-              </Reveal>
-            </li>
+                <ul className={styles.stack}>
+                  {role.stack.map((s) => (
+                    <li className="chip chip--mono" key={s}>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </Flow>
+            </Flow>
           ))}
         </ol>
       </div>

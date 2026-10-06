@@ -18,6 +18,8 @@
     color-mix(in oklab, var(--c-violet) 60%, transparent),
     transparent
   );
+  transform-origin: 50% 0;
+  transform: scaleY(var(--flow-through));
 }
 
 .row {
@@ -33,7 +35,10 @@
   height: 15px;
   border-radius: 50%;
   border: 2px solid var(--c-accent);
-  background: var(--c-bg);
+  /* Hollow until its role arrives, then it fills and throws a halo. */
+  background: color-mix(in oklab, var(--c-accent) calc(var(--flow-in) * 100%), var(--c-bg));
+  box-shadow: 0 0 0 calc(var(--flow-in) * 5px) color-mix(in oklab, var(--c-accent) 20%, transparent);
+  transform: scale(calc(0.5 + var(--flow-in) * 0.5));
 }
 
 .nodeCurrent::after {

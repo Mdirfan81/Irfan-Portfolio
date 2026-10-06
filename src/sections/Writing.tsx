@@ -1,6 +1,7 @@
 import { ArrowUpRight, BookOpen } from 'lucide-react'
 import { posts } from '@/data/writing'
 import { profile } from '@/data/profile'
+import { Flow } from '@/components/Flow'
 import { Reveal } from '@/components/Reveal'
 import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import styles from './Writing.module.css'
@@ -34,32 +35,30 @@ export function Writing() {
 
         <ol className={styles.list}>
           {posts.map((post, i) => (
-            <li key={post.id}>
-              <Reveal delay={i * 0.05}>
-                <a
-                  className={`glass ${styles.item}`}
-                  href={post.href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span className={styles.index} aria-hidden="true">
-                    {String(i + 1).padStart(2, '0')}
+            <Flow as="li" kind="left" key={post.id}>
+              <a
+                className={`glass ${styles.item}`}
+                href={post.href}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className={styles.index} aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span>
+                  <span className={styles.title}>{post.title}</span>
+                  <span className={styles.blurb}>{post.blurb}</span>
+                  <span className={styles.meta}>
+                    <span className="chip chip--mono">{post.topic}</span>
+                    <span className="chip chip--mono">Medium</span>
                   </span>
-                  <span>
-                    <span className={styles.title}>{post.title}</span>
-                    <span className={styles.blurb}>{post.blurb}</span>
-                    <span className={styles.meta}>
-                      <span className="chip chip--mono">{post.topic}</span>
-                      <span className="chip chip--mono">Medium</span>
-                    </span>
-                  </span>
-                  <span className={styles.arrow} aria-hidden="true">
-                    <ArrowUpRight size={17} />
-                  </span>
-                  <span className="visually-hidden">(opens in a new tab)</span>
-                </a>
-              </Reveal>
-            </li>
+                </span>
+                <span className={styles.arrow} aria-hidden="true">
+                  <ArrowUpRight size={17} />
+                </span>
+                <span className="visually-hidden">(opens in a new tab)</span>
+              </a>
+            </Flow>
           ))}
         </ol>
       </div>

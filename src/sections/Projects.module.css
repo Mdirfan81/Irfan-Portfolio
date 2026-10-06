@@ -60,6 +60,12 @@
   margin-top: var(--sp-5);
 }
 
+/* The flow wrapper sits between the grid item and the card, and has to pass
+   the row's height on so every card in a row ends level. */
+.fill {
+  height: 100%;
+}
+
 /* Featured work reads through emphasis, not through a wider track — an uneven
    span leaves holes in an auto-fill grid whenever the column count shifts. */
 .featuredCard {

@@ -244,8 +244,10 @@ ol {
   border: 1px solid var(--c-hairline);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-card);
+  /* Unprefixed only, here and everywhere else. The build adds -webkit- itself;
+     written out by hand alongside it, the minifier keeps just the prefixed
+     one, which Chrome and Firefox ignore — no blur at all in production. */
   backdrop-filter: blur(14px) saturate(1.4);
-  -webkit-backdrop-filter: blur(14px) saturate(1.4);
 }
 
 /* Blur is the single most expensive thing on the page once a WebGL scene is
@@ -255,7 +257,78 @@ ol {
   .glass {
     --c-veil: color-mix(in oklab, var(--c-bg) 90%, transparent);
     backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ==========================================================================
+   Scroll flow — content that arrives and leaves with the scroll.
+   lib/flow.ts writes --flow-in / --flow-out / --flow-through on each flowing
+   element; everything here only turns those numbers into movement. The values
+   on :root are the resting ones, so with the engine off (reduced motion, no
+   JavaScript) every element is simply in place.
+   ========================================================================== */
+:root {
+  --flow-in: 1;
+  --flow-out: 0;
+  --flow-through: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 'live' is set only while an element is on its way in or out. At rest the
+     transform is dropped entirely, so settled text is never on its own layer. */
+  [data-flow='live'] {
+    --flow-away: calc(1 - var(--flow-in));
+    will-change: transform, opacity;
+  }
+
+  /* Tilts up from lying flat as it arrives, and on over as it leaves — the
+     page turning on a drum rather than sliding on a wall. It comes up over the
+     bottom edge of the view, so it needs no fade — and must not have one: an
+     ancestor at less than full opacity cuts a glass card off from the page
+     behind it, and its backdrop blur would switch on only when the fade ended. */
+  .flow--rise[data-flow='live'] {
+    transform: perspective(1100px)
+      translate3d(0, calc(var(--flow-away) * 4.5rem - var(--flow-out) * 2rem), 0)
+      rotateX(calc(var(--flow-away) * 13deg - var(--flow-out) * 9deg))
+      scale(calc(1 - var(--flow-away) * 0.07 - var(--flow-out) * 0.05));
+  }
+
+  /* Only ever from the left: content pushed off the right edge would give the
+     page a horizontal scrollbar. */
+  .flow--left[data-flow='live'] {
+    transform: perspective(1100px)
+      translate3d(calc(var(--flow-away) * -4rem), calc(var(--flow-out) * -1.5rem), 0)
+      rotateY(calc(var(--flow-away) * 10deg))
+      scale(calc(1 - var(--flow-out) * 0.04));
+  }
+
+  /* Arriving sideways it is already in view, so this one does fade — on the
+     child, which is the glass surface itself and keeps its blur that way.
+     Opaque well before the movement ends, so nothing is read at half strength. */
+  .flow--left[data-flow='live'] > * {
+    opacity: calc(var(--flow-in) * 1.6);
+  }
+
+  /* No travel at all, for the last block on the page: moving it down would
+     lengthen the document it is trying to reach the end of. */
+  .flow--zoom[data-flow='live'] {
+    transform: perspective(1200px) rotateX(calc(var(--flow-away) * 12deg))
+      scale(calc(1 - var(--flow-away) * 0.12 - var(--flow-out) * 0.05));
+    transform-origin: 50% 100%;
+  }
+
+  .flow--step[data-flow='live'] {
+    opacity: calc(var(--flow-in) * 1.6);
+    transform: translate3d(calc(var(--flow-away) * -1.25rem), 0, 0);
+  }
+
+  /* A part follows its flowing parent in, one beat behind the part before it.
+     The numbers are chosen so that part 14 is still fully in at --flow-in: 1. */
+  [data-flow='live'] .flow-part {
+    --part: clamp(0, calc((var(--flow-in) - 0.4 - min(var(--i, 0), 14) * 0.03) * 8), 1);
+    opacity: var(--part);
+    transform: translate3d(0, calc((1 - var(--part)) * 0.75rem), 0)
+      scale(calc(0.92 + var(--part) * 0.08));
   }
 }
 

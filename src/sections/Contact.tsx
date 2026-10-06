@@ -7,7 +7,8 @@ import {
   Mail,
 } from "lucide-react";
 import { profile } from "@/data/profile";
-import { Reveal } from "@/components/Reveal";
+import { Flow } from "@/components/Flow";
+import { flowPart } from "@/lib/flow";
 import { Eyebrow, SplitText } from "@/components/TextReveal";
 import styles from "./Contact.module.css";
 
@@ -59,7 +60,7 @@ export function Contact() {
           text="Let us build something"
         />
 
-        <Reveal delay={0.05}>
+        <Flow kind="zoom">
           <div className={`glass ${styles.panel}`}>
             <div className={styles.inner}>
               <div>
@@ -100,10 +101,10 @@ export function Contact() {
               </div>
 
               <ul className={styles.channels}>
-                {channels.map((c) => {
+                {channels.map((c, i) => {
                   const Icon = c.icon;
                   return (
-                    <li key={c.label}>
+                    <li key={c.label} className="flow-part" style={flowPart(i * 2)}>
                       <a
                         className={styles.channel}
                         href={c.href}
@@ -135,7 +136,7 @@ export function Contact() {
               </ul>
             </div>
           </div>
-        </Reveal>
+        </Flow>
 
         <footer className={styles.footer}>
           <div className={styles.footerRow}>

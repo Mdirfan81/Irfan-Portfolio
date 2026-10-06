@@ -2,9 +2,11 @@ import { useMemo, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Star } from 'lucide-react'
 import { projectFilters, projects, type ProjectFilter } from '@/data/projects'
+import { Flow } from '@/components/Flow'
 import { TiltCard } from '@/components/TiltCard'
 import { Reveal } from '@/components/Reveal'
 import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
+import { flowPart } from '@/lib/flow'
 import styles from './Projects.module.css'
 
 export function Projects() {
@@ -85,36 +87,38 @@ export function Projects() {
                   exit={{ opacity: 0, scale: reduced ? 1 : 0.96 }}
                   transition={{ duration: reduced ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <TiltCard
-                    className={`${styles.card} ${project.featured ? styles.featuredCard : ''}`}
-                    intensity={6}
-                  >
-                    <div className={styles.cardHead}>
-                      <span className={styles.icon} aria-hidden="true">
-                        <Icon size={20} />
-                      </span>
-                      {project.featured ? (
-                        <span className={styles.star}>
-                          <Star size={11} aria-hidden />
-                          Featured
+                  <Flow className={styles.fill}>
+                    <TiltCard
+                      className={`${styles.card} ${project.featured ? styles.featuredCard : ''}`}
+                      intensity={6}
+                    >
+                      <div className={styles.cardHead}>
+                        <span className={styles.icon} aria-hidden="true">
+                          <Icon size={20} />
                         </span>
-                      ) : (
-                        <span className={styles.domain}>{project.domain}</span>
-                      )}
-                    </div>
-                    <div>
-                      <h3 className={styles.title}>{project.title}</h3>
-                      <p className={styles.org}>{project.org}</p>
-                    </div>
-                    <p className={styles.summary}>{project.summary}</p>
-                    <ul className={styles.tags}>
-                      {project.tags.map((t) => (
-                        <li className="chip chip--mono" key={t}>
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                  </TiltCard>
+                        {project.featured ? (
+                          <span className={styles.star}>
+                            <Star size={11} aria-hidden />
+                            Featured
+                          </span>
+                        ) : (
+                          <span className={styles.domain}>{project.domain}</span>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className={styles.title}>{project.title}</h3>
+                        <p className={styles.org}>{project.org}</p>
+                      </div>
+                      <p className={styles.summary}>{project.summary}</p>
+                      <ul className={styles.tags}>
+                        {project.tags.map((t, i) => (
+                          <li className="chip chip--mono flow-part" style={flowPart(i + 3)} key={t}>
+                            {t}
+                          </li>
+                        ))}
+                      </ul>
+                    </TiltCard>
+                  </Flow>
                 </motion.article>
               )
             })}

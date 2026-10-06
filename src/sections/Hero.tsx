@@ -41,6 +41,10 @@ export function Hero() {
   });
   const copyY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : -90]);
   const copyOpacity = useTransform(scrollYProgress, [0, 0.8], [1, reduced ? 1 : 0.15]);
+  // The terminal moves the other way and tips back, so the two halves of the
+  // hero part like layers at different depths instead of scrolling off as one.
+  const cardY = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 70]);
+  const cardTilt = useTransform(scrollYProgress, [0, 1], [0, reduced ? 0 : 10]);
 
   const lineVariants = {
     hidden: { y: reduced ? 0 : "110%", opacity: reduced ? 0 : 1 },
@@ -210,60 +214,62 @@ export function Hero() {
           </motion.div>
         </motion.div>
 
-        <motion.div
-          variants={fade}
-          custom={3}
-          initial="hidden"
-          animate="visible"
-        >
-          <TiltCard className={styles.terminal} intensity={6}>
-            <div className={styles.termBar}>
-              <span className={styles.termDots} aria-hidden="true">
-                <span className={styles.termDot} />
-                <span className={styles.termDot} />
-                <span className={styles.termDot} />
-              </span>
-              <span className={styles.termTitle}>~/irfan/profile.json</span>
-            </div>
-            <motion.div
-              className={styles.termBody}
-              aria-hidden="true"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                hidden: {},
-                visible: {
-                  transition: {
-                    delayChildren: reduced ? 0 : 0.9,
-                    staggerChildren: reduced ? 0 : 0.22,
-                  },
-                },
-              }}
-            >
-              <motion.p className={styles.termLine} variants={typeLine}>
-                <span className={styles.termComment}>
-                  // 6+ years, four teams, one obsession
+        <motion.div style={{ y: cardY, rotateX: cardTilt, transformPerspective: 1200 }}>
+          <motion.div
+            variants={fade}
+            custom={3}
+            initial="hidden"
+            animate="visible"
+          >
+            <TiltCard className={styles.terminal} intensity={6}>
+              <div className={styles.termBar}>
+                <span className={styles.termDots} aria-hidden="true">
+                  <span className={styles.termDot} />
+                  <span className={styles.termDot} />
+                  <span className={styles.termDot} />
                 </span>
-              </motion.p>
-              {TERMINAL.map((row) => (
-                <motion.p
-                  className={styles.termLine}
-                  key={row.key}
-                  variants={typeLine}
-                >
-                  <span className={styles.termPrompt}>›</span>
-                  <span className={styles.termKey}>{row.key}:</span>
-                  <span className={styles.termVal}>{row.val}</span>
+                <span className={styles.termTitle}>~/irfan/profile.json</span>
+              </div>
+              <motion.div
+                className={styles.termBody}
+                aria-hidden="true"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: {
+                    transition: {
+                      delayChildren: reduced ? 0 : 0.9,
+                      staggerChildren: reduced ? 0 : 0.22,
+                    },
+                  },
+                }}
+              >
+                <motion.p className={styles.termLine} variants={typeLine}>
+                  <span className={styles.termComment}>
+                    // 6+ years, four teams, one obsession
+                  </span>
                 </motion.p>
-              ))}
-              <motion.p className={styles.termLine} variants={typeLine}>
-                <span className={styles.termPrompt}>›</span>
-                <span className={styles.termComment}>ship it</span>
-                <span className={styles.caret} />
-              </motion.p>
-            </motion.div>
-          </TiltCard>
-        </motion.div>
+                {TERMINAL.map((row) => (
+                  <motion.p
+                    className={styles.termLine}
+                    key={row.key}
+                    variants={typeLine}
+                  >
+                    <span className={styles.termPrompt}>›</span>
+                    <span className={styles.termKey}>{row.key}:</span>
+                    <span className={styles.termVal}>{row.val}</span>
+                  </motion.p>
+                ))}
+                <motion.p className={styles.termLine} variants={typeLine}>
+                  <span className={styles.termPrompt}>›</span>
+                  <span className={styles.termComment}>ship it</span>
+                  <span className={styles.caret} />
+                </motion.p>
+              </motion.div>
+            </TiltCard>
+          </motion.div>
+          </motion.div>
       </div>
 
       <a className={styles.cue} href="#about">

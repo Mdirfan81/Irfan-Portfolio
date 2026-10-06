@@ -24,12 +24,4 @@ export const revealVariants = (reduced: boolean): Variants => ({
   },
 })
 
-/** Parent that staggers its children in reading order. */
-export const staggerVariants = (reduced: boolean, stagger = 0.07): Variants => ({
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: reduced ? 0 : stagger, delayChildren: reduced ? 0 : 0.05 },
-  },
-})
-
 export const viewportOnce = { once: true, amount: 0.25 } as const

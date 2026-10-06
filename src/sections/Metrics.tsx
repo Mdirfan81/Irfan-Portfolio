@@ -1,7 +1,8 @@
+import type { CSSProperties } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { metrics, type Metric } from '@/data/metrics'
 import { TiltCard } from '@/components/TiltCard'
-import { RevealGroup, RevealItem } from '@/components/Reveal'
+import { Flow } from '@/components/Flow'
 import { Eyebrow, FadeText, SplitText } from '@/components/TextReveal'
 import { useCountUp } from '@/lib/useCountUp'
 import styles from './Metrics.module.css'
@@ -9,6 +10,8 @@ import styles from './Metrics.module.css'
 function MetricCard({ metric }: { metric: Metric }) {
   const reduced = useReducedMotion() ?? false
   const { ref, value } = useCountUp(metric.value, reduced)
+  // A percentage fills its share of the track; anything else fills it all.
+  const share = metric.suffix.trim() === '%' ? metric.value / 100 : 1
 
   return (
     <TiltCard className={styles.card} intensity={5}>
@@ -26,6 +29,9 @@ function MetricCard({ metric }: { metric: Metric }) {
         {metric.label}
       </p>
       <p className={styles.detail}>{metric.detail}</p>
+      <span className={styles.meter} aria-hidden="true">
+        <span className={styles.meterFill} style={{ '--share': share } as CSSProperties} />
+      </span>
     </TiltCard>
   )
 }
@@ -41,13 +47,13 @@ export function Metrics() {
           estimated.
         </FadeText>
 
-        <RevealGroup className={styles.grid}>
+        <div className={styles.grid}>
           {metrics.map((m) => (
-            <RevealItem key={m.label}>
+            <Flow key={m.label}>
               <MetricCard metric={m} />
-            </RevealItem>
+            </Flow>
           ))}
-        </RevealGroup>
+        </div>
       </div>
     </section>
   )

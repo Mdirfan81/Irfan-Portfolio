@@ -1,5 +1,7 @@
 import { profile } from "@/data/profile";
+import { Flow } from "@/components/Flow";
 import { Reveal } from "@/components/Reveal";
+import { flowPart } from "@/lib/flow";
 import { Eyebrow, ScrollHighlight, SplitText } from "@/components/TextReveal";
 import styles from "./About.module.css";
 
@@ -30,19 +32,23 @@ export function About() {
           </div>
 
           <div className={styles.side}>
-            <Reveal delay={0.1}>
+            <Flow>
               <div className={`glass ${styles.panel}`}>
                 <p className={styles.panelLabel}>At a glance</p>
                 <dl className={styles.facts}>
-                  {FACTS.map((f) => (
-                    <div className={styles.fact} key={f.key}>
+                  {FACTS.map((f, i) => (
+                    <div
+                      className={`${styles.fact} flow-part`}
+                      style={flowPart(i * 2)}
+                      key={f.key}
+                    >
                       <dt className={styles.factKey}>{f.key}</dt>
                       <dd className={styles.factVal}>{f.value}</dd>
                     </div>
                   ))}
                 </dl>
               </div>
-            </Reveal>
+            </Flow>
           </div>
         </div>
       </div>

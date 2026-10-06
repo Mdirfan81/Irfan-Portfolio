@@ -14,6 +14,11 @@ export function Nav() {
   const [open, setOpen] = useState(false)
   const active = useActiveSection(SECTION_IDS)
   const { theme, toggle } = useTheme()
+  // Under the name: the discipline at the top of the page, then whichever
+  // section is on screen — so the capsule always says where you are, including
+  // on small screens where the section links are folded away.
+  const here = navItems.find((item) => item.id === active)?.label
+  const caption = scrolled && here ? here : profile.discipline
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -45,7 +50,12 @@ export function Nav() {
             </span>
             <span className={styles.brandText}>
               {profile.name}
-              <span className={styles.brandRole}>{profile.discipline}</span>
+              <span className={styles.brandRole}>
+                <span className="visually-hidden">{profile.discipline}</span>
+                <span key={caption} className={styles.brandCaption} aria-hidden="true">
+                  {caption}
+                </span>
+              </span>
             </span>
           </a>
 
