@@ -250,6 +250,40 @@ ol {
   backdrop-filter: blur(14px) saturate(1.4);
 }
 
+/* The edge of a glass surface catches the light nearest the pointer. The
+   liquid cursor marks the surface it is over and says where on it the pointer
+   is (--gx / --gy); this draws a glint there, masked down to a hairline ring
+   so only the rim is lit and the content is left alone. */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: radial-gradient(
+    15rem circle at var(--gx, 50%) var(--gy, 0%),
+    var(--c-specular),
+    color-mix(in oklab, var(--c-accent) 55%, transparent) 38%,
+    transparent 72%
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.glass[data-lit]::after {
+  opacity: 1;
+}
+
+/* While the liquid cursor is on screen it is the cursor. */
+html.liquid-cursor,
+html.liquid-cursor * {
+  cursor: none !important;
+}
+
 /* Blur is the single most expensive thing on the page once a WebGL scene is
    running behind it. Phones trade it for a more opaque veil — same legibility,
    a fraction of the compositing cost. */

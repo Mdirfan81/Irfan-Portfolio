@@ -78,7 +78,8 @@ test('the 3D journey layer mounts without taking over the page', async ({ page }
 
   await expect(layer).toHaveAttribute('aria-hidden', 'true')
   await expect(layer).toHaveCSS('pointer-events', 'none')
-  await expect(page.locator('canvas')).toBeVisible()
+  // Scoped to the layer: the liquid cursor draws on a canvas of its own.
+  await expect(layer.locator('canvas')).toBeVisible()
 
   // A control sitting over the scene still receives the click.
   await page.getByRole('button', { name: /switch to (light|dark) theme/i }).click()

@@ -33,6 +33,8 @@
 
   /* Semantic */
   --c-focus: #7cc4ff;
+  /* The glint along a glass edge where the light catches it */
+  --c-specular: rgb(255 255 255 / 90%);
   --c-success: #34d399;
 
   /* Aurora field */
@@ -103,6 +105,7 @@
   --z-content: 1;
   --z-nav: 50;
   --z-overlay: 100;
+  --z-cursor: 200;
 
   color-scheme: dark;
 }
@@ -131,6 +134,7 @@
   --c-mint: #0f766e;
   --c-on-accent: #ffffff;
   --c-focus: #1d4ed8;
+  --c-specular: var(--c-accent);
 
   --grad-aurora-1: radial-gradient(60% 60% at 20% 15%, rgb(79 140 255 / 20%) 0%, transparent 70%);
   --grad-aurora-2: radial-gradient(55% 55% at 82% 25%, rgb(169 139 255 / 18%) 0%, transparent 72%);

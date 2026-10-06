@@ -1,5 +1,6 @@
 import { BrowserRouter, MemoryRouter, Route, Routes } from 'react-router'
 import { Backdrop } from '@/components/Backdrop'
+import { LiquidCursor } from '@/components/LiquidCursor'
 import { ScrollProgress } from '@/components/ScrollProgress'
 import { Nav } from '@/components/Nav'
 import { StationRail } from '@/components/StationRail'
@@ -37,6 +38,7 @@ export default function App() {
       <main id="main">
         <AppRoutes />
       </main>
+      <LiquidCursor />
     </Router>
   )
 }

@@ -52,7 +52,7 @@ src/
   styles/global.css     Reset, layout primitives, shared .btn / .chip / .glass.
   data/                 All site content. Edit here, not in components.
   lib/                  Hooks: theme, active section, count-up, hash scroll, motion variants.
-  components/           Nav, StationRail, Backdrop, AuroraBackground, TiltCard, Flow, Reveal, Marquee, ScrollProgress.
+  components/           Nav, StationRail, Backdrop, AuroraBackground, LiquidCursor, TiltCard, Flow, Reveal, Marquee, ScrollProgress.
   three/                The journey: stations, scene, canvas wrapper, performance guard.
   sections/             One file per page section, each with its own CSS module.
   routes/               Home and NotFound.
@@ -139,6 +139,16 @@ Four DOM layers on top of the scene, all opacity/transform only:
 4. **Interaction** — `TiltCard` perspective tilt on Motion springs, the shared
    layout pill in the nav and project filters, the count-up on impact figures,
    and a skills marquee whose pace and direction follow the scroll.
+
+**The cursor.** On a mouse, the system cursor is replaced by a bubble of
+liquid glass (`LiquidCursor`, engine in `lib/liquidCursor.ts`). It trails the
+pointer on a spring and stretches along its direction of travel; moving fast
+sheds drops, and an SVG filter fuses any that touch, so they pull away on a
+neck and bead off. In Chromium the bubble bends the page behind it through a
+displacement map. Over a button or link it pours itself round the control as a
+sheet of glass; over a card it grows into a lens and the card's rim lights up
+under it. A dot marks the exact pointer position with no lag. Touch devices and
+reduced motion keep the system cursor.
 
 The header starts as a full-width bar and draws in to a floating glass capsule
 once the page moves; the caption under the name then tracks the section on

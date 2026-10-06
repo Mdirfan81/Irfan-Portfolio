@@ -1,0 +1,91 @@
+/* Not a box, only a home for three fixed layers and the colours they share. */
+.cursor {
+  --liquid-tint: var(--c-accent);
+  --liquid-fill: 0.1;
+  --liquid-rim: rgb(255 255 255 / 55%);
+  --liquid-light: rgb(255 255 255);
+  --liquid-shadow: rgb(0 0 0 / 55%);
+
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-cursor);
+  pointer-events: none;
+  /* Hidden with visibility, not opacity: an ancestor at less than full
+     opacity would cut the bubble off from the page it is meant to bend. */
+  visibility: hidden;
+}
+
+.cursor[data-visible] {
+  visibility: visible;
+}
+
+/* White highlights vanish on a pale page, so the light theme draws the liquid
+   in the accent ink instead and makes it a little fuller. */
+:global([data-theme='light']) .cursor {
+  --liquid-fill: 0.14;
+  --liquid-rim: color-mix(in oklab, var(--c-accent) 60%, transparent);
+  --liquid-shadow: color-mix(in oklab, var(--c-accent) 35%, transparent);
+}
+
+/* Must stay rendered for its filters to work, so it is collapsed, not hidden. */
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.field,
+.bubble,
+.dot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.bubble {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  /* --lens is set by the engine where the browser can bend a backdrop; the
+     fallback is an ordinary frosted drop. */
+  backdrop-filter: var(--lens, blur(2px) saturate(1.6) brightness(1.08));
+  background: radial-gradient(120% 120% at 30% 20%, rgb(255 255 255 / 20%), transparent 46%);
+  box-shadow:
+    inset 0 -7px 9px -8px var(--liquid-rim),
+    0 10px 22px -12px var(--liquid-shadow);
+}
+
+/* Wrapped round a control it stops being a lens and becomes a sheet of glass
+   lying over it: brighter, with a lit top edge and a highlight that slides
+   under the pointer. No blur — the label underneath has to stay sharp. */
+.cursor[data-mode='wrap'] .bubble {
+  backdrop-filter: saturate(1.5) brightness(1.14);
+  background:
+    radial-gradient(
+      6rem circle at var(--sx, 50%) var(--sy, 50%),
+      rgb(255 255 255 / 22%),
+      transparent 62%
+    ),
+    linear-gradient(rgb(255 255 255 / 9%), rgb(255 255 255 / 2%));
+  box-shadow:
+    inset 0 0 0 1px var(--liquid-rim),
+    inset 0 1.5px 0 0 rgb(255 255 255 / 75%),
+    inset 0 -6px 10px -8px var(--liquid-rim),
+    0 0 26px -6px color-mix(in oklab, var(--c-accent) 55%, transparent),
+    0 14px 30px -16px var(--liquid-shadow);
+}
+
+.dot {
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--c-text);
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+/* The control itself is the target now; the dot would only sit on its label. */
+.cursor[data-mode='wrap'] .dot {
+  opacity: 0;
+}
