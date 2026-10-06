@@ -15,18 +15,22 @@ type Props = {
   onFirstFrame: () => void;
 };
 
+/** Frames a moving scene draws before it is called ready. */
+const SETTLE_FRAMES = 4;
+
 /**
- * Reports the first frame. Mounting the canvas is not the same as having
- * something on it: the shaders still have to compile, and until they have the
- * layer is an empty rectangle.
+ * Reports that the scene is on screen. Mounting the canvas is not the same as
+ * having something on it, and the very first draws are the slow ones: buffers
+ * are uploaded and the GPU builds its pipelines. Those are let through first,
+ * while the loader still has the page covered. A still scene only ever gets
+ * one frame, so that one has to do.
  */
-function FirstFrame({ onFirstFrame }: Pick<Props, "onFirstFrame">) {
-  const reported = useRef(false);
+function FirstFrame({ still, onFirstFrame }: Pick<Props, "still" | "onFirstFrame">) {
+  const frames = useRef(0);
 
   useFrame(() => {
-    if (reported.current) return;
-    reported.current = true;
-    onFirstFrame();
+    frames.current++;
+    if (frames.current === (still ? 1 : SETTLE_FRAMES)) onFirstFrame();
   });
 
   return null;
@@ -46,6 +50,8 @@ export default function JourneyCanvas({ quality, still, onGiveUp, onFirstFrame }
   // The layer stays transparent until there is a frame to show, then fades in,
   // so the scene and its scrim never land on the page in one jump.
   const [drawn, setDrawn] = useState(false);
+  const [warm, setWarm] = useState(false);
+  const handleWarm = useCallback(() => setWarm(true), []);
 
   const handleFirstFrame = useCallback(() => {
     setDrawn(true);
@@ -76,7 +82,8 @@ export default function JourneyCanvas({ quality, still, onGiveUp, onFirstFrame }
       <Canvas
         className={styles.canvas}
         dpr={dpr}
-        frameloop={still ? "demand" : "always"}
+        // No frames until the shaders are compiled: see Warmup in JourneyScene.
+        frameloop={!warm ? "never" : still ? "demand" : "always"}
         camera={{ fov: 62, near: 0.1, far: 90, position: [0, 0.2, 7] }}
         gl={{
           antialias: false,
@@ -90,8 +97,9 @@ export default function JourneyCanvas({ quality, still, onGiveUp, onFirstFrame }
           colors={colors}
           quality={effectiveQuality}
           still={still}
+          onWarm={handleWarm}
         />
-        <FirstFrame onFirstFrame={handleFirstFrame} />
+        <FirstFrame still={still} onFirstFrame={handleFirstFrame} />
         {!still && (
           <PerfGuard
             onGiveUp={onGiveUp}

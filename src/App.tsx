@@ -2,6 +2,7 @@ import { BrowserRouter, MemoryRouter, Route, Routes } from 'react-router'
 import { Backdrop } from '@/components/Backdrop'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { ErrorScreen } from '@/components/ErrorScreen'
+import { JourneyLoader } from '@/components/JourneyLoader'
 import { LiquidCursor } from '@/components/LiquidCursor'
 import { ScrollProgress } from '@/components/ScrollProgress'
 import { Nav } from '@/components/Nav'
@@ -43,6 +44,10 @@ export default function App() {
           <AppRoutes />
         </ErrorBoundary>
       </main>
+      {/* If the loader itself breaks, the page is simply there from the start. */}
+      <ErrorBoundary fallback={null}>
+        <JourneyLoader />
+      </ErrorBoundary>
       {/* Decoration: without it the system cursor simply comes back. */}
       <ErrorBoundary fallback={null}>
         <LiquidCursor />

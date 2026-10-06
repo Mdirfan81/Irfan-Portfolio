@@ -51,7 +51,7 @@ src/
   styles/tokens.css     Design tokens — colours, type scale, spacing, motion.
   styles/global.css     Reset, layout primitives, shared .btn / .chip / .glass.
   data/                 All site content. Edit here, not in components.
-  lib/                  Hooks: theme, active section, count-up, hash scroll, motion variants.
+  lib/                  Hooks: theme, active section, count-up, hash scroll, motion variants. Engines: scroll flow, liquid cursor, page loader.
   components/           Nav, StationRail, Backdrop, AuroraBackground, JourneyLoader, LiquidCursor, SquigglyText, TiltCard, Flow, Reveal, Marquee, ScrollProgress, ErrorBoundary, ErrorScreen.
   three/                The journey: stations, scene, canvas wrapper, performance guard.
   sections/             One file per page section, each with its own CSS module.
@@ -115,8 +115,19 @@ screen reader, a slow laptop, or JavaScript disabled halfway through loading.
 loading three.js at all; `PerfGuard` then measures real frame times and drops
 resolution at ~29fps, handing the page back to the CSS aurora below ~16fps. With
 `prefers-reduced-motion` the scene renders one static frame: the first figure,
-already formed. The scene also waits for the page to finish loading before it
-mounts, and stays off below 768px, where the CSS aurora is the whole backdrop.
+already formed. The scene stays off below 768px, where the CSS aurora is the
+whole backdrop.
+
+**The loader.** Where the scene is going to run, the page opens behind a
+full-screen cover (`JourneyLoader`): the scene's own stars fly in and gather
+into a turning bubble of dots, and when the scene has drawn the bubble bursts
+and the cover fades. The hero and the nav hold their entrances until then, so
+page and backdrop arrive together. The stars are drawn from a worker, because
+the main thread is busy with exactly the work being waited for, and the scene
+compiles its shaders in the background before its first frame so the GPU is
+never held either. The cover is never up for less than 1.5 seconds or more than
+6. Phones and reduced-motion visitors get no cover and no wait; for them the
+scene, where there is one, still loads only after the page has.
 
 ## Motion
 
@@ -180,8 +191,8 @@ Checked in CI by `e2e/portfolio.spec.ts`:
 | Journey (three.js, lazy) | 887 KB | 236 KB |
 | CSS                      | 32 KB  | 7 KB   |
 
-The 3D chunk is fetched only after the page has loaded and the WebGL, Save-Data
-and viewport-width checks pass, so phones never download it.
+The 3D chunk is fetched only once the WebGL, Save-Data and viewport-width checks
+pass, so phones never download it.
 
 ## Deploying
 

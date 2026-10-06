@@ -12,6 +12,11 @@
   animation: nav-drop 0.9s var(--ease-out) backwards;
 }
 
+/* Held on its first frame, up out of sight, while the loader has the page. */
+.waiting {
+  animation-play-state: paused;
+}
+
 @keyframes nav-drop {
   from {
     transform: translateY(-120%);

@@ -18,6 +18,7 @@ import { profile } from "@/data/profile";
 import { SquigglyText } from "@/components/SquigglyText";
 import { TiltCard } from "@/components/TiltCard";
 import { EASE_OUT } from "@/lib/motion";
+import { usePageLoading } from "@/lib/pageLoad";
 import styles from "./Hero.module.css";
 
 /** The name is the hero. Split so each word can rise on its own. */
@@ -33,6 +34,9 @@ const TERMINAL = [
 
 export function Hero() {
   const reduced = useReducedMotion() ?? false;
+  // The entrance waits for the loader to lift, so it plays where it can be
+  // seen instead of finishing behind the cover.
+  const show = usePageLoading() ? "hidden" : "visible";
 
   // As the hero scrolls away, its copy drifts up and fades a little behind the page.
   const heroRef = useRef<HTMLElement>(null);
@@ -101,7 +105,7 @@ export function Hero() {
             variants={fade}
             custom={-4}
             initial="hidden"
-            animate="visible"
+            animate={show}
           >
             <span className={styles.dot} aria-hidden="true" />
             Open to Senior Software Engineering roles
@@ -121,7 +125,7 @@ export function Hero() {
                     variants={lineVariants}
                     custom={i}
                     initial="hidden"
-                    animate="visible"
+                    animate={show}
                     className={
                       i === NAME_LINES.length - 1 ? "gradient-text gradient-text--shimmer" : undefined
                     }
@@ -138,7 +142,7 @@ export function Hero() {
             variants={fade}
             custom={0}
             initial="hidden"
-            animate="visible"
+            animate={show}
           >
             <span className={styles.roleMain}>{profile.role}</span>
             <span className={styles.roleSep} aria-hidden="true">
@@ -163,7 +167,7 @@ export function Hero() {
             variants={fade}
             custom={1}
             initial="hidden"
-            animate="visible"
+            animate={show}
           >
             {profile.tagline} 6+ years of it — design systems that hold,
             pipelines that catch things, and performance budgets teams actually
@@ -175,7 +179,7 @@ export function Hero() {
             variants={fade}
             custom={2}
             initial="hidden"
-            animate="visible"
+            animate={show}
           >
             <a className="btn btn--primary" href="#projects">
               See selected work
@@ -224,7 +228,7 @@ export function Hero() {
             variants={fade}
             custom={3}
             initial="hidden"
-            animate="visible"
+            animate={show}
           >
             <TiltCard className={styles.terminal} intensity={6}>
               <div className={styles.termBar}>
@@ -239,7 +243,7 @@ export function Hero() {
                 className={styles.termBody}
                 aria-hidden="true"
                 initial="hidden"
-                animate="visible"
+                animate={show}
                 variants={{
                   hidden: {},
                   visible: {

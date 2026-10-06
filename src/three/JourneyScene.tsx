@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, type RefObject } from "react";
-import { useFrame, type RootState } from "@react-three/fiber";
+import { useFrame, useThree, type RootState } from "@react-three/fiber";
 import * as THREE from "three";
 import { STATIONS } from "./stations";
 import { buildFormations, rng } from "./formations";
@@ -21,6 +21,8 @@ type SceneProps = {
   quality: "low" | "high";
   /** When true the scene renders one static frame and never animates. */
   still: boolean;
+  /** Raised once every shader is compiled and the scene is ready to draw. */
+  onWarm: () => void;
 };
 
 /**
@@ -42,7 +44,7 @@ type Flight = {
   focusY: number;
 };
 
-type Layer = Omit<SceneProps, "input"> & { flightRef: RefObject<Flight> };
+type Layer = Omit<SceneProps, "input" | "onWarm"> & { flightRef: RefObject<Flight> };
 
 const CAMERA_Z = 7;
 /** The constellation hangs this far in front of the camera. */
@@ -177,9 +179,8 @@ function createBuffer(): Buffer {
   };
 }
 
-function Nebula({ colors, still, flightRef }: Layer) {
+function Nebula({ colors, still, flightRef, buffer }: Layer & { buffer: RefObject<Buffer | null> }) {
   const screen = useRef<THREE.Mesh<THREE.PlaneGeometry, THREE.ShaderMaterial>>(null);
-  const buffer = useRef<Buffer | null>(null);
   const palette = usePalette(colors);
 
   const uniforms = useMemo(
@@ -187,14 +188,15 @@ function Nebula({ colors, still, flightRef }: Layer) {
     [],
   );
 
-  // Built on the first frame rather than in an effect, so that a scene which
-  // only ever renders one still frame has it in time. Torn down with the layer.
+  // Built by whichever needs it first, the warm-up or the first frame, so that
+  // a scene which only ever renders one still frame has it in time. Torn down
+  // with the layer.
   useEffect(
     () => () => {
       buffer.current?.dispose();
       buffer.current = null;
     },
-    [],
+    [buffer],
   );
 
   useFrame((state) => {
@@ -477,7 +479,44 @@ function Constellation({ colors, quality, still, flightRef }: Layer) {
   );
 }
 
-export function JourneyScene({ input, colors, quality, still }: SceneProps) {
+/* ── Warm-up ────────────────────────────────────────────────────────────────
+   Compiles every shader before the first frame is asked for. Left to the first
+   frame, compilation is synchronous: the nebula alone holds the GPU for most of
+   a second, and for that second nothing on the page can be drawn, the loader
+   included. Asked for ahead of time it happens on the driver's own threads and
+   the page keeps moving. The canvas holds its frame loop until this reports. */
+function Warmup({ buffer, onWarm }: { buffer: RefObject<Buffer | null>; onWarm: () => void }) {
+  const gl = useThree((state) => state.gl);
+  const scene = useThree((state) => state.scene);
+  const camera = useThree((state) => state.camera);
+
+  useEffect(() => {
+    let cancelled = false;
+    const b = (buffer.current ??= createBuffer());
+
+    // A program is keyed by where it will be drawn, so the nebula has to be
+    // compiled against its own off-screen target or it compiles twice.
+    gl.setRenderTarget(b.target);
+    const nebula = gl.compileAsync(b.scene, b.camera);
+    gl.setRenderTarget(null);
+
+    Promise.all([nebula, gl.compileAsync(scene, camera)])
+      // A failed warm-up costs nothing but the stall it was there to avoid.
+      .catch(() => {})
+      .then(() => {
+        if (!cancelled) onWarm();
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [gl, scene, camera, buffer, onWarm]);
+
+  return null;
+}
+
+export function JourneyScene({ input, colors, quality, still, onWarm }: SceneProps) {
+  const nebulaBuffer = useRef<Buffer | null>(null);
   const flightRef = useRef<Flight>({
     station: 0,
     velocity: 0,
@@ -491,9 +530,16 @@ export function JourneyScene({ input, colors, quality, still }: SceneProps) {
   return (
     <>
       <Pilot input={input} flightRef={flightRef} still={still} />
-      <Nebula colors={colors} quality={quality} still={still} flightRef={flightRef} />
+      <Nebula
+        colors={colors}
+        quality={quality}
+        still={still}
+        flightRef={flightRef}
+        buffer={nebulaBuffer}
+      />
       <Stars colors={colors} quality={quality} still={still} flightRef={flightRef} />
       <Constellation colors={colors} quality={quality} still={still} flightRef={flightRef} />
+      <Warmup buffer={nebulaBuffer} onWarm={onWarm} />
     </>
   );
 }

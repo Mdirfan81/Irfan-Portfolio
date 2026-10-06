@@ -10,6 +10,13 @@ journey is built; this file is the layer on top of that.
   has no Tailwind and no shadcn, so do not install the component. Rebuild the
   effect in the repo's own idiom: a CSS module, design tokens, and
   `motion/react` where a spring is needed.
+- When the owner describes how something should look or behave, build that. If
+  you think a different design is better, say so and ask; do not substitute it.
+  The first loader was built as a small non-blocking widget in a corner when
+  the owner had asked for a full-screen one in the scene's own style, and it had
+  to be redone.
+- New visuals should look like the 3D scene: soft star dots in the accent,
+  violet and cyan tokens, white-hot at the centre on the dark theme.
 - "Make it smooth" is a standing expectation for anything animated. Check the
   result in a real browser before reporting it done.
 - On 2026-10-06 the owner asked for no new unit tests and no new Playwright
@@ -41,10 +48,17 @@ journey is built; this file is the layer on top of that.
   `channel: 'chrome'`, and run the suite as
   `PW_CHROMIUM_PATH='C:\Program Files\Google\Chrome\Application\chrome.exe' npx playwright test --workers=2`.
   More workers starve the software-rendered WebGL scene and tests time out.
-- The scene only mounts at 768px and wider, after `load` plus an idle callback.
-  Headless Chrome needs
+- The scene only mounts at 768px and wider. Headless Chrome needs
   `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader` to render
-  it at all, and renders it slowly, so timings measured there are pessimistic.
+  it at all, and renders it slowly, so timings measured there mean nothing.
+- To measure smoothness, launch with
+  `--enable-gpu --use-angle=d3d11 --ignore-gpu-blocklist` so the real GPU is
+  used, and record `requestAnimationFrame` gaps. Do it inside the worker too
+  (`page.on('worker', w => w.evaluate(…))`). Each Playwright launch is a fresh
+  profile with an empty shader cache, so the first page load of a run is the
+  cold case and the second is what a returning visitor gets.
+- The loader lifts by itself after 6 seconds. A script that holds the 3D chunk
+  longer than that will find the loader already gone.
 
 ## Known problems, as of 2026-10-06
 
@@ -68,7 +82,8 @@ journey is built; this file is the layer on top of that.
 - Site copy lives in `src/data/`. `NotFound` and `ErrorScreen` are the
   exceptions and carry their own copy.
 - Decoration is `aria-hidden` and `pointer-events: none`, and must never affect
-  layout or block content.
+  layout. The page loader is the one thing allowed to cover content, at the
+  owner's request.
 
 ## Motion rules
 
@@ -80,9 +95,15 @@ journey is built; this file is the layer on top of that.
 - Pointer-driven effects check `e.pointerType === 'mouse'`. A tap fires pointer
   events too, but never the leave that would reset the effect.
 - Animate `transform`/`opacity`, or the individual `translate`, `rotate` and
-  `scale` properties. Anything on screen during page load must be
-  compositor-only, because the main thread is busy parsing three.js and
-  compiling shaders at exactly that moment.
+  `scale` properties.
+- During start-up the main thread stalls for up to a second at a time (starting
+  React, evaluating three.js). Anything animated from it freezes with it.
+  Whatever is on screen then must either be compositor-only CSS or be drawn
+  from a worker with its own `OffscreenCanvas`.
+- A worker does not escape the GPU. Compiling a shader synchronously holds the
+  GPU process, and every canvas on the page stops, the worker's included. The
+  scene therefore compiles ahead of its first frame with
+  `renderer.compileAsync`, with the frame loop held at `never` until it is done.
 - For an enter or exit that can be interrupted, use a CSS transition, not
   keyframes: a transition continues from the current value, keyframes restart.
   `@starting-style` gives an entrance without any JavaScript.
@@ -112,17 +133,38 @@ reach the keyframes as custom properties. The wrapper sits outside the hero's
 At phone sizes the default 6 to 8px displacement is heavy; pass a smaller
 `scale`.
 
-**Scene loader (`JourneyLoader.tsx`, `Backdrop.tsx`).** The 3D scene is late on
-purpose: it waits for `load` plus idle, then downloads about 240KB gzipped, then
-compiles shaders. Do not "fix" the delay by loading it earlier; the README
-explains why content comes first. The loader fills the gap instead. It is a
-zero-sized fixed point at `78%` across and `26.7%` down, which is where
-`ANCHORS[0]` in `JourneyScene.tsx` puts the first constellation, so the bubble
-hands over to the figure in place. If the anchor changes, change both. The
-entrance is held back 350ms so a warm-cache load, where the scene is up almost
-at once, does not flash a loader. `JourneyCanvas` reports its first `useFrame`
-through `onFirstFrame`; that ends the loader and fades the canvas layer in from
-`opacity: 0`, so the scene and its scrim no longer land in one jump.
+**Page loader.** A full-screen, opaque cover that hides the page until the 3D
+scene has drawn, so page and backdrop arrive together. It shows the scene's own
+stars gathering into a turning bubble of dots, with a few still streaming in to
+the centre; on release the bubble bursts outward and the cover fades.
+
+- `lib/pageLoad.ts` is the state: a module-level store read with
+  `usePageLoading()`. Loading starts only where there is a scene to wait for
+  (768px and wider, WebGL, no Save-Data, motion not reduced). It ends when
+  `Backdrop` calls `releasePage()`, on the scene's first frames or when the
+  scene gives up, but never before `MIN_MS` (1.5s) and never after `MAX_MS`
+  (6s).
+- `components/JourneyLoader.tsx` is the cover. `lib/journeyLoader.ts` creates
+  the canvas and hands it to a worker (`loaderField.worker.ts`);
+  `lib/loaderField.ts` is the drawing, and has no DOM access so it runs in
+  either place. The worker is imported with `?worker&inline` because the
+  single-file build cannot fetch a separate script.
+- The canvas is created in the effect, not rendered by React. A canvas can be
+  transferred to a worker only once, and StrictMode runs effects twice in
+  development.
+- `Hero` and `Nav` read `usePageLoading()` and hold their entrance animations
+  until the cover lifts. Anything else with a first-screen entrance should do
+  the same, or it will play unseen.
+- While the cover is up `Backdrop` mounts the scene at once. Without a cover
+  (reduced motion) it still waits for `load` plus idle, so content comes first.
+- `JourneyCanvas` reports ready on its fourth frame, not its first, so the slow
+  first draws happen under the cover, then fades its layer in from `opacity: 0`.
+- The content stays in the document under the cover, so screen readers are not
+  kept waiting. Do not switch it to `visibility: hidden`.
+- Measured with the real GPU on the owner's machine: on a warm load the worker's
+  worst frame is about 50 to 80ms. On a browser's very first visit there is one
+  hitch of 0.3 to 0.4s as the cover lifts, when Chrome compiles its own shaders
+  for the page's blurs and filters. That one is not fixed.
 
 **Error boundaries (`ErrorBoundary.tsx`, `ErrorScreen.tsx`).** Four of them,
 from the outside in:
@@ -142,6 +184,10 @@ a `mailto:` link, not router links, because the router may be what broke.
 - Do not import anything from `src/three/` into the main bundle, not even a
   small helper such as `rng`. It drags the module, and possibly three.js, out of
   the lazy chunk. Phones never download that chunk today.
+- three.js keys a compiled shader by where it will be drawn. The nebula renders
+  into an off-screen target, so `Warmup` in `JourneyScene.tsx` sets that target
+  before calling `compileAsync` on it. Compile it against the screen and it is
+  compiled a second time, synchronously, on first use.
 - A filter or transform on an ancestor of the hero title interacts with the
   `overflow: hidden` masks used for the rise-in. Decide which side of the mask
   an effect belongs on before adding it.

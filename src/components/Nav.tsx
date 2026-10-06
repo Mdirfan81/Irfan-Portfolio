@@ -12,6 +12,7 @@ import {
 import type { MotionStyle, MotionValue } from 'motion/react'
 import { Menu, X, Moon, Sun, ArrowUpRight } from 'lucide-react'
 import { navItems, profile } from '@/data/profile'
+import { usePageLoading } from '@/lib/pageLoad'
 import { useActiveSection } from '@/lib/useActiveSection'
 import { useTheme } from '@/lib/useTheme'
 import styles from './Nav.module.css'
@@ -92,6 +93,8 @@ export function Nav() {
   const [open, setOpen] = useState(false)
   const active = useActiveSection(SECTION_IDS)
   const { theme, toggle } = useTheme()
+  // The bar drops in once the loader has lifted, not behind it.
+  const waiting = usePageLoading()
   // Where the pointer is along the dock; Infinity while it is somewhere else,
   // which puts every link out of reach and lets them settle back.
   const pointerX = useMotionValue(Infinity)
@@ -150,7 +153,9 @@ export function Nav() {
 
   return (
     <>
-      <header className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
+      <header
+        className={`${styles.nav} ${scrolled ? styles.scrolled : ''} ${waiting ? styles.waiting : ''}`}
+      >
         <div className={`shell ${styles.inner}`}>
           <a href="#top" className={styles.brand}>
             <span className={styles.mark} aria-hidden="true">
