@@ -48,9 +48,14 @@ journey is built; this file is the layer on top of that.
   `channel: 'chrome'`, and run the suite as
   `PW_CHROMIUM_PATH='C:\Program Files\Google\Chrome\Application\chrome.exe' npx playwright test --workers=2`.
   More workers starve the software-rendered WebGL scene and tests time out.
-- The scene only mounts at 768px and wider. Headless Chrome needs
+- The scene mounts at every width, phones included. Headless Chrome needs
   `--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader` to render
   it at all, and renders it slowly, so timings measured there mean nothing.
+- To check a layout, shoot every section at 360, 390, 768, 1024, 1180, 1366 and
+  1536 wide, with `isMobile` and `hasTouch` set below 900. Scroll to each
+  section before shooting: content arrives with the scroll, so a full-page
+  screenshot shows it half-arrived. Also list every element whose box runs past
+  the viewport; `scrollWidth` alone misses ones that are clipped.
 - To measure smoothness, launch with
   `--enable-gpu --use-angle=d3d11 --ignore-gpu-blocklist` so the real GPU is
   used, and record `requestAnimationFrame` gaps. Do it inside the worker too
@@ -66,10 +71,12 @@ journey is built; this file is the layer on top of that.
   both projects. The cause is `TextReveal`: words waiting to be revealed sit at
   `opacity: 0.22`, and axe measures contrast on `aria-hidden` text too. It
   failed before the changes described below and is unrelated to them.
-- Between 900px and about 1100px wide the header is cramped: the brand text
-  wraps, and close to 900px "Get in touch" runs off the right edge.
-  The desktop nav breakpoint (900px in `Nav.module.css`) is too low for seven
-  links plus the call to action.
+- `e2e/portfolio.spec.ts` "anchor navigation reaches each section" is flaky on
+  the `mobile` project since the scene was enabled on phones (2026-10-07):
+  about one run in three a section is not reached inside the 5s timeout. Under
+  software rendering the phone-sized page is slow enough that the smooth scroll
+  stalls. With the real GPU, 10 runs out of 10 reached every section. The cause
+  is not pinned down beyond that.
 
 ## Conventions the code follows
 
@@ -140,7 +147,7 @@ the centre; on release the bubble bursts outward and the cover fades.
 
 - `lib/pageLoad.ts` is the state: a module-level store read with
   `usePageLoading()`. Loading starts only where there is a scene to wait for
-  (768px and wider, WebGL, no Save-Data, motion not reduced). It ends when
+  (WebGL, no Save-Data, motion not reduced). It ends when
   `Backdrop` calls `releasePage()`, on the scene's first frames or when the
   scene gives up, but never before `MIN_MS` (1.5s) and never after `MAX_MS`
   (6s).
@@ -166,6 +173,29 @@ the centre; on release the bubble bursts outward and the cover fades.
   hitch of 0.3 to 0.4s as the cover lifts, when Chrome compiles its own shaders
   for the page's blurs and filters. That one is not fixed.
 
+**Responsive layout.** The breakpoints, and what each one is for:
+
+| Width      | What changes                                                      |
+| ---------- | ----------------------------------------------------------------- |
+| under 1120 | Nav links and "Get in touch" fold into the menu sheet             |
+| 980        | Hero goes two-column, in even halves so the terminal lines fit    |
+| 1180       | Hero columns become 1.15 to 0.85                                  |
+| 1340       | Station rail appears: ticks only, names on hover                  |
+| 1500       | Station rail also shows the current station's name                |
+
+`DESKTOP_NAV` in `Nav.tsx` must match the 1120px rule in `Nav.module.css`; the
+menu closes itself when the window crosses it. The rail thresholds come from
+`--max-w`: narrower than that and the rail lies on top of the cards.
+
+The scene runs on phones and tablets at the `low` setting, which is a budget of
+pixels (`LIGHT_PIXELS` in `JourneyCanvas.tsx`), not a fixed ratio, so a phone
+can draw at up to 2x and a laptop at 1x for the same cost. The ratio is read
+once at mount, because a phone's address bar sliding away fires a resize. On a
+screen taller than wide, `TALL_ANCHORS`, `TALL_SCALE` and `TALL_FADE` in
+`JourneyScene.tsx` move the constellation beside the hero name and draw it
+smaller and at about half brightness; the blend between the two layouts is
+continuous in the aspect ratio.
+
 **Error boundaries (`ErrorBoundary.tsx`, `ErrorScreen.tsx`).** Four of them,
 from the outside in:
 
@@ -183,7 +213,14 @@ a `mailto:` link, not router links, because the router may be what broke.
 
 - Do not import anything from `src/three/` into the main bundle, not even a
   small helper such as `rng`. It drags the module, and possibly three.js, out of
-  the lazy chunk. Phones never download that chunk today.
+  the lazy chunk, and Save-Data visitors are promised they never download it.
+- The mobile menu sheet covers the whole screen at `--z-overlay`, above the
+  header. The header is raised over it while the menu is open (`.menuOpen`);
+  without that the close button is underneath the sheet.
+- A row of items with separators between them will sooner or later wrap and
+  leave a separator hanging at the end of a line. The hero's role line draws
+  each slash as a pseudo-element in the gap to the left of its item and clips
+  the row, so a slash at the start of a line falls outside and is hidden.
 - three.js keys a compiled shader by where it will be drawn. The nebula renders
   into an off-screen target, so `Warmup` in `JourneyScene.tsx` sets that target
   before calling `compileAsync` on it. Compile it against the screen and it is

@@ -19,6 +19,9 @@ import styles from './Nav.module.css'
 
 const SECTION_IDS = navItems.map((n) => n.id)
 
+/** Where the links fold out of the menu and into the bar. Mirrors Nav.module.css. */
+const DESKTOP_NAV = '(min-width: 1120px)'
+
 // Dock magnification: how far either side of the pointer the swell reaches (px),
 // how large the link right under it gets, and the spring every link rides to
 // its target size.
@@ -138,23 +141,29 @@ export function Nav() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Lock body scroll and close on Escape while the mobile sheet is open.
+  // Lock body scroll and close on Escape while the mobile sheet is open. It
+  // also closes if the window grows into the desktop layout, as a tablet turned
+  // on its side does: the button that would close it is gone at that width.
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const desktop = window.matchMedia(DESKTOP_NAV)
+    const onWiden = () => desktop.matches && setOpen(false)
     window.addEventListener('keydown', onKey)
+    desktop.addEventListener('change', onWiden)
     return () => {
       document.body.style.overflow = prev
       window.removeEventListener('keydown', onKey)
+      desktop.removeEventListener('change', onWiden)
     }
   }, [open])
 
   return (
     <>
       <header
-        className={`${styles.nav} ${scrolled ? styles.scrolled : ''} ${waiting ? styles.waiting : ''}`}
+        className={`${styles.nav} ${scrolled ? styles.scrolled : ''} ${waiting ? styles.waiting : ''} ${open ? styles.menuOpen : ''}`}
       >
         <div className={`shell ${styles.inner}`}>
           <a href="#top" className={styles.brand}>

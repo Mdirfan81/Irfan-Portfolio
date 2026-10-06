@@ -371,6 +371,22 @@ const ANCHORS: [number, number][] = [
   [0.5, 0.46],
 ];
 
+/**
+ * The same on a screen taller than it is wide. There the copy runs the full
+ * width and no part of the screen is left clear, so the figure cannot keep out
+ * of the way; it steps back instead. It comes in from the edge, where it would
+ * be cut off, to sit beside the name in the hero, and is drawn smaller and
+ * fainter so that whatever text passes over it still reads.
+ */
+const TALL_ANCHORS: [number, number][] = [
+  [0.5, 0.4],
+  [0.42, 0.36],
+];
+/** Smallest the figure is allowed to get on a tall screen. */
+const TALL_SCALE = 0.38;
+/** How much of its brightness the figure keeps on a tall screen. */
+const TALL_FADE = 0.55;
+
 function Constellation({ colors, quality, still, flightRef }: Layer) {
   const points = useRef<THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
   const bound = useRef(-1);
@@ -404,6 +420,7 @@ function Constellation({ colors, quality, still, flightRef }: Layer) {
       uWarp: { value: 0 },
       uPixels: { value: 1 },
       uLight: { value: 0 },
+      uFade: { value: 1 },
       uTone: { value: new THREE.Color() },
       uAlt: { value: new THREE.Color() },
       uCore: { value: new THREE.Color() },
@@ -431,15 +448,23 @@ function Constellation({ colors, quality, still, flightRef }: Layer) {
     // figure shrinks to fit a narrow window instead of running off its edge.
     const distance = CAMERA_Z - FIGURE_Z;
     const halfHeight = distance * Math.tan(THREE.MathUtils.degToRad(31));
-    const halfWidth = halfHeight * (state.size.width / state.size.height);
-    const [ax, ay] = ANCHORS[from % 2];
-    const [bx, by] = ANCHORS[(from + 1) % 2];
+    const aspect = state.size.width / state.size.height;
+    const halfWidth = halfHeight * aspect;
+    // 0 on a wide screen, 1 on a tall one, easing across between the two so a
+    // window dragged narrower never sees the figure jump.
+    const tall = 1 - THREE.MathUtils.smoothstep(aspect, 0.7, 1.15);
+    const ax = THREE.MathUtils.lerp(ANCHORS[from % 2][0], TALL_ANCHORS[from % 2][0], tall);
+    const ay = THREE.MathUtils.lerp(ANCHORS[from % 2][1], TALL_ANCHORS[from % 2][1], tall);
+    const bx = THREE.MathUtils.lerp(ANCHORS[(from + 1) % 2][0], TALL_ANCHORS[(from + 1) % 2][0], tall);
+    const by = THREE.MathUtils.lerp(ANCHORS[(from + 1) % 2][1], TALL_ANCHORS[(from + 1) % 2][1], tall);
     object.position.set(
       THREE.MathUtils.lerp(ax, bx, mix) * halfWidth,
       THREE.MathUtils.lerp(ay, by, mix) * halfHeight,
       FIGURE_Z,
     );
-    object.scale.setScalar(THREE.MathUtils.clamp(halfWidth / 15.5, 0.46, 0.74));
+    object.scale.setScalar(
+      THREE.MathUtils.clamp(halfWidth / 15.5, THREE.MathUtils.lerp(0.46, TALL_SCALE, tall), 0.74),
+    );
 
     // A slow sway plus a lean toward the pointer: enough to show the figure
     // has depth without ever turning it far enough to stop reading.
@@ -459,6 +484,7 @@ function Constellation({ colors, quality, still, flightRef }: Layer) {
     u.uWarp.value = Math.min(Math.abs(f.velocity) / 3, 1);
     u.uPixels.value = pixelsPerUnit(state);
     u.uLight.value = palette.light ? 1 : 0;
+    u.uFade.value = THREE.MathUtils.lerp(1, TALL_FADE, tall);
     u.uTone.value.copy(palette.stations[from]).lerp(palette.stations[from + 1], mix);
     u.uAlt.value.copy(from % 2 ? palette.tone.cyan : palette.tone.violet);
     u.uCore.value.copy(palette.star);

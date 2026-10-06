@@ -115,8 +115,15 @@ screen reader, a slow laptop, or JavaScript disabled halfway through loading.
 loading three.js at all; `PerfGuard` then measures real frame times and drops
 resolution at ~29fps, handing the page back to the CSS aurora below ~16fps. With
 `prefers-reduced-motion` the scene renders one static frame: the first figure,
-already formed. The scene stays off below 768px, where the CSS aurora is the
-whole backdrop.
+already formed.
+
+**Small screens.** Phones and tablets get the scene too, on the lighter
+setting: fewer stars and a fixed budget of pixels. On a screen taller than it
+is wide there is no clear corner for the constellation to hang in, so it moves
+in beside the name and is drawn smaller and fainter, leaving the copy readable
+wherever it passes over. Below 1120px the nav links fold into a menu sheet, and
+the station rail only appears from 1340px, where the page has a margin to hold
+it.
 
 **The loader.** Where the scene is going to run, the page opens behind a
 full-screen cover (`JourneyLoader`): the scene's own stars fly in and gather
@@ -126,8 +133,9 @@ page and backdrop arrive together. The stars are drawn from a worker, because
 the main thread is busy with exactly the work being waited for, and the scene
 compiles its shaders in the background before its first frame so the GPU is
 never held either. The cover is never up for less than 1.5 seconds or more than
-6. Phones and reduced-motion visitors get no cover and no wait; for them the
-scene, where there is one, still loads only after the page has.
+6. Reduced-motion visitors, and devices with no scene at all, get no cover and
+no wait; for them the scene, where there is one, still loads only after the
+page has.
 
 ## Motion
 
@@ -191,8 +199,8 @@ Checked in CI by `e2e/portfolio.spec.ts`:
 | Journey (three.js, lazy) | 887 KB | 236 KB |
 | CSS                      | 32 KB  | 7 KB   |
 
-The 3D chunk is fetched only once the WebGL, Save-Data and viewport-width checks
-pass, so phones never download it.
+The 3D chunk is fetched only once the WebGL and Save-Data checks pass, so a
+visitor who has asked their browser to save data never downloads it.
 
 ## Deploying
 

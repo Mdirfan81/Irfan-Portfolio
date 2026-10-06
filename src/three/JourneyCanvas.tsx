@@ -15,6 +15,9 @@ type Props = {
   onFirstFrame: () => void;
 };
 
+/** Pixels the lighter setting may draw: about a 1280 by 720 screen at 1x. */
+const LIGHT_PIXELS = 0.9e6;
+
 /** Frames a moving scene draws before it is called ready. */
 const SETTLE_FRAMES = 4;
 
@@ -59,8 +62,19 @@ export default function JourneyCanvas({ quality, still, onGiveUp, onFirstFrame }
   }, [onFirstFrame]);
 
   const effectiveQuality = downgraded ? "low" : quality;
-  const dpr: [number, number] | number =
-    downgraded || quality === "low" ? 1 : ([1, 1.6] as [number, number]);
+  // The lighter setting is a budget of pixels, not a fixed ratio. A laptop
+  // screen spends it all at 1x; a phone has so few CSS pixels that it can
+  // afford 2x inside the same budget, and at 1x its stars would be a blur.
+  // Read once: a phone's address bar sliding away is a resize, and
+  // reallocating the canvas on every one of those is a stutter.
+  const [lightDpr] = useState(() =>
+    Math.min(2, Math.max(1, Math.sqrt(LIGHT_PIXELS / (window.innerWidth * window.innerHeight)))),
+  );
+  const dpr: [number, number] | number = downgraded
+    ? 1
+    : quality === "low"
+      ? lightDpr
+      : ([1, 1.6] as [number, number]);
 
   const handleDowngrade = useCallback(() => setDowngraded(true), []);
 

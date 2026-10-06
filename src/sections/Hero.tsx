@@ -145,13 +145,7 @@ export function Hero() {
             animate={show}
           >
             <span className={styles.roleMain}>{profile.role}</span>
-            <span className={styles.roleSep} aria-hidden="true">
-              /
-            </span>
             <span>{profile.years} years</span>
-            <span className={styles.roleSep} aria-hidden="true">
-              /
-            </span>
             <span>
               <MapPin
                 size={13}

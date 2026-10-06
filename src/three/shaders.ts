@@ -232,6 +232,7 @@ export const CONSTELLATION_FRAGMENT = /* glsl */ `
   uniform vec3 uAlt;
   uniform vec3 uCore;
   uniform float uLight;
+  uniform float uFade;
   varying float vAlpha;
   varying float vPick;
 
@@ -243,7 +244,7 @@ export const CONSTELLATION_FRAGMENT = /* glsl */ `
     vec3 color = mix(uTone, uAlt, step(0.7, vPick));
     // A white-hot centre on the dark theme; on the light one, plain ink.
     color = mix(color, uCore, soft * 0.65 * (1.0 - uLight));
-    gl_FragColor = vec4(color, soft * vAlpha * mix(0.62, 0.8, uLight));
+    gl_FragColor = vec4(color, soft * vAlpha * mix(0.62, 0.8, uLight) * uFade);
     #include <colorspace_fragment>
   }
 `;

@@ -3,8 +3,8 @@ import { useReducedMotion } from 'motion/react'
 import styles from './AuroraBackground.module.css'
 
 /**
- * Decorative depth layer: drifting aurora blooms, a fine grid, grain and a
- * pointer-tracked highlight. Purely presentational — hidden from assistive tech.
+ * Decorative depth layer: drifting aurora blooms, grain and a pointer-tracked
+ * highlight. Purely presentational — hidden from assistive tech.
  *
  * The pointer highlight writes CSS custom properties straight onto the node
  * instead of going through state, so moving the mouse never triggers a render.
@@ -44,7 +44,6 @@ export function AuroraBackground() {
       <div className={`${styles.bloom} ${styles.bloom1}`} />
       <div className={`${styles.bloom} ${styles.bloom2}`} />
       <div className={`${styles.bloom} ${styles.bloom3}`} />
-      <div className={styles.grid} />
       <div className={`${styles.spotlight} ${pointerActive ? styles.spotlightOn : ''}`} />
       <div className={styles.grain} />
       <div className={styles.vignette} />

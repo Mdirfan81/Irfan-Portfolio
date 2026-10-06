@@ -75,18 +75,6 @@
   opacity: 1;
 }
 
-/* Fine grid — gives the depth something to sit against */
-.grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, var(--c-hairline) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--c-hairline) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: radial-gradient(80% 60% at 50% 0%, #000 0%, transparent 75%);
-  opacity: 0.5;
-}
-
 /* Film grain, so the large gradients never band */
 .grain {
   position: absolute;

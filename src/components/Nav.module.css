@@ -12,6 +12,13 @@
   animation: nav-drop 0.9s var(--ease-out) backwards;
 }
 
+/* The menu sheet covers the whole screen, the bar included. With the menu open
+   the bar is lifted over it, or the button that closes the menu is underneath
+   the thing it closes. */
+.menuOpen {
+  z-index: calc(var(--z-overlay) + 1);
+}
+
 /* Held on its first frame, up out of sight, while the loader has the page. */
 .waiting {
   animation-play-state: paused;
@@ -92,6 +99,7 @@
 .brand {
   display: inline-flex;
   align-items: center;
+  min-width: 0;
   gap: var(--sp-3);
   color: var(--c-text);
   text-decoration: none;
@@ -102,6 +110,7 @@
 
 .mark {
   display: grid;
+  flex: none;
   place-items: center;
   width: 34px;
   height: 34px;
@@ -119,20 +128,26 @@
   min-width: 0;
 }
 
+/* One line at any width: it shrinks a little on the narrowest phones, and is
+   cut with an ellipsis before it is ever allowed to wrap and make the bar
+   taller. */
 .brandRole {
   display: block;
   overflow: hidden;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: clamp(0.5625rem, 2.7vw, 0.6875rem);
   font-weight: 400;
   letter-spacing: 0.06em;
   color: var(--c-text-subtle);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Rolls up into place whenever the caption changes. */
 .brandCaption {
   display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
   animation: caption-in var(--dur-slow) var(--ease-out);
 }
 
@@ -295,7 +310,10 @@
   margin-top: var(--sp-5);
 }
 
-@media (min-width: 900px) {
+/* The width at which the brand, seven links and the call to action all fit on
+   one line. Below it, tablets included, the links fold into the menu sheet.
+   DESKTOP_NAV in Nav.tsx has to say the same. */
+@media (min-width: 1120px) {
   .links {
     display: flex;
   }

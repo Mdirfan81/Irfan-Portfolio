@@ -34,9 +34,14 @@ function readSetup(): FieldSetup {
     channels(tokens.getPropertyValue(name).trim() || fallback)
   const [r, g, b] = token('--c-bg', '#070b14')
 
+  const view = viewport()
+  // The bubble is smaller on a small screen, and the same number of stars
+  // packed into it would be a solid disc.
+  const room = Math.min(1, Math.max(0.4, Math.min(view.width, view.height) / 900))
+
   return {
-    ...viewport(),
-    count: (navigator.hardwareConcurrency ?? 4) >= 8 ? 2600 : 1500,
+    ...view,
+    count: Math.round(((navigator.hardwareConcurrency ?? 4) >= 8 ? 2600 : 1500) * room),
     light: (r + g + b) / 3 > 128,
     tones: [
       token('--c-accent', '#6aa6ff'),

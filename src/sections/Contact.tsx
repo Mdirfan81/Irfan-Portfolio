@@ -14,6 +14,15 @@ import styles from "./Contact.module.css";
 
 const YEAR = new Date().getFullYear();
 
+/**
+ * An address with a place to break after its @. On a narrow card the email
+ * then wraps there, whole, instead of being cut wherever the line runs out.
+ */
+const breakable = (value: string) =>
+  value
+    .split("@")
+    .flatMap((part, i) => (i === 0 ? [part] : ["@", <wbr key={i} />, part]));
+
 export function Contact() {
   const channels = [
     {
@@ -117,7 +126,7 @@ export function Contact() {
                         </span>
                         <span>
                           <span className={styles.channelLabel}>{c.label}</span>
-                          <span className={styles.channelValue}>{c.value}</span>
+                          <span className={styles.channelValue}>{breakable(c.value)}</span>
                         </span>
                         <ArrowUpRight
                           size={16}

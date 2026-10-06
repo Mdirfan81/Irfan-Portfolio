@@ -80,23 +80,39 @@
 }
 
 .role {
+  --sep-gap: 1.75rem;
+
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--sp-3);
+  gap: var(--sp-2) var(--sep-gap);
+  /* Clips the separator of whichever item starts a line: see below. */
+  overflow: hidden;
   font-family: var(--font-mono);
   font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem);
   color: var(--c-text-muted);
   letter-spacing: 0.02em;
 }
 
+.role > span {
+  position: relative;
+}
+
+/* The slash between items hangs in the gap to the left of each one. When the
+   row wraps, the item that starts the new line has its slash off the left edge,
+   where the overflow hides it, so a line never begins or ends on a separator
+   at any width. */
+.role > span + span::before {
+  content: '/';
+  position: absolute;
+  inset-inline-start: calc(var(--sep-gap) / -2);
+  translate: -50% 0;
+  color: var(--c-accent);
+}
+
 .roleMain {
   color: var(--c-text);
   font-weight: 500;
-}
-
-.roleSep {
-  color: var(--c-accent);
 }
 
 .lede {
@@ -217,10 +233,18 @@
   background: linear-gradient(to bottom, var(--c-accent), transparent);
 }
 
+/* Side by side from here up. Even halves at first: any narrower and the
+   terminal's longest line no longer fits inside the card. */
 @media (min-width: 980px) {
   .grid {
-    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
     gap: var(--sp-7);
+  }
+}
+
+@media (min-width: 1180px) {
+  .grid {
+    grid-template-columns: 1.15fr 0.85fr;
   }
 }
