@@ -68,7 +68,7 @@ export function Contact() {
                   Have a frontend problem worth solving?
                 </p>
                 <p className={styles.copy}>
-                  I am based in {profile.location}, open to software engineering
+                  I am based in {profile.location}, open to Senior Software Engineering
                   roles, and happy to talk through a specific problem before
                   anything formal.
                 </p>

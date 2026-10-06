@@ -1,5 +1,7 @@
 import { BrowserRouter, MemoryRouter, Route, Routes } from 'react-router'
 import { Backdrop } from '@/components/Backdrop'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { ErrorScreen } from '@/components/ErrorScreen'
 import { LiquidCursor } from '@/components/LiquidCursor'
 import { ScrollProgress } from '@/components/ScrollProgress'
 import { Nav } from '@/components/Nav'
@@ -36,9 +38,15 @@ export default function App() {
       <Nav />
       <StationRail />
       <main id="main">
-        <AppRoutes />
+        {/* A section that throws takes the content with it, not the nav. */}
+        <ErrorBoundary fallback={(error) => <ErrorScreen error={error} />}>
+          <AppRoutes />
+        </ErrorBoundary>
       </main>
-      <LiquidCursor />
+      {/* Decoration: without it the system cursor simply comes back. */}
+      <ErrorBoundary fallback={null}>
+        <LiquidCursor />
+      </ErrorBoundary>
     </Router>
   )
 }

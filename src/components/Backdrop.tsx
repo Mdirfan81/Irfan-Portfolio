@@ -1,6 +1,8 @@
 import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { AuroraBackground } from './AuroraBackground'
+import { ErrorBoundary } from './ErrorBoundary'
+import { JourneyLoader } from './JourneyLoader'
 
 const JourneyCanvas = lazy(() => import('@/three/JourneyCanvas'))
 
@@ -72,7 +74,8 @@ function useAfterLoadIdle(): boolean {
  *
  * The CSS aurora always renders: it is cheap, it is the whole backdrop where
  * WebGL is unavailable, and it is what shows while three.js is still loading.
- * The 3D star field layers on top when the device can carry it.
+ * The 3D star field layers on top when the device can carry it, with a small
+ * loader standing in for it until it has drawn.
  */
 export function Backdrop() {
   const reduced = useReducedMotion() ?? false
@@ -84,13 +87,34 @@ export function Backdrop() {
   const handleGiveUp = useCallback(() => setSupport('none'), [])
   const ready = useAfterLoadIdle()
 
+  // Between first paint and the scene's first frame there is a wait for the
+  // page to settle, a 240KB download and a shader compile. The loader holds the
+  // constellation's place through all of it, and is only ever started for a
+  // device that is going to get the scene.
+  const [sceneDrawn, setSceneDrawn] = useState(false)
+  const [loading, setLoading] = useState(() => support !== 'none')
+  const handleFirstFrame = useCallback(() => setSceneDrawn(true), [])
+  const handleLoaderGone = useCallback(() => setLoading(false), [])
+
   return (
     <>
       <AuroraBackground />
       {ready && support !== 'none' && (
-        <Suspense fallback={null}>
-          <JourneyCanvas quality={support} still={reduced} onGiveUp={handleGiveUp} />
-        </Suspense>
+        // The scene is decoration: if its chunk fails to arrive or it throws,
+        // the page keeps the aurora and carries on.
+        <ErrorBoundary fallback={null} onError={handleGiveUp}>
+          <Suspense fallback={null}>
+            <JourneyCanvas
+              quality={support}
+              still={reduced}
+              onGiveUp={handleGiveUp}
+              onFirstFrame={handleFirstFrame}
+            />
+          </Suspense>
+        </ErrorBoundary>
+      )}
+      {loading && !reduced && (
+        <JourneyLoader done={sceneDrawn || support === 'none'} onGone={handleLoaderGone} />
       )}
     </>
   )

@@ -52,7 +52,7 @@ src/
   styles/global.css     Reset, layout primitives, shared .btn / .chip / .glass.
   data/                 All site content. Edit here, not in components.
   lib/                  Hooks: theme, active section, count-up, hash scroll, motion variants.
-  components/           Nav, StationRail, Backdrop, AuroraBackground, LiquidCursor, TiltCard, Flow, Reveal, Marquee, ScrollProgress.
+  components/           Nav, StationRail, Backdrop, AuroraBackground, JourneyLoader, LiquidCursor, SquigglyText, TiltCard, Flow, Reveal, Marquee, ScrollProgress, ErrorBoundary, ErrorScreen.
   three/                The journey: stations, scene, canvas wrapper, performance guard.
   sections/             One file per page section, each with its own CSS module.
   routes/               Home and NotFound.

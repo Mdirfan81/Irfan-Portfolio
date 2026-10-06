@@ -15,6 +15,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { profile } from "@/data/profile";
+import { SquigglyText } from "@/components/SquigglyText";
 import { TiltCard } from "@/components/TiltCard";
 import { EASE_OUT } from "@/lib/motion";
 import styles from "./Hero.module.css";
@@ -103,29 +104,33 @@ export function Hero() {
             animate="visible"
           >
             <span className={styles.dot} aria-hidden="true" />
-            Open to software engineering roles
+            Open to Senior Software Engineering roles
           </motion.p>
 
           <h1 className={styles.title} id="hero-title">
             <span className="visually-hidden">
               {profile.name} — {profile.role}. {profile.tagline}
             </span>
-            {NAME_LINES.map((line, i) => (
-              <span key={line} className={styles.titleLine} aria-hidden="true">
-                <motion.span
-                  style={{ display: "block" }}
-                  variants={lineVariants}
-                  custom={i}
-                  initial="hidden"
-                  animate="visible"
-                  className={
-                    i === NAME_LINES.length - 1 ? "gradient-text gradient-text--shimmer" : undefined
-                  }
-                >
-                  {line}
-                </motion.span>
-              </span>
-            ))}
+            {/* Wraps both lines from outside their clip, so the wobble isn't cut
+                off at the edge of each line box. */}
+            <SquigglyText>
+              {NAME_LINES.map((line, i) => (
+                <span key={line} className={styles.titleLine} aria-hidden="true">
+                  <motion.span
+                    style={{ display: "block" }}
+                    variants={lineVariants}
+                    custom={i}
+                    initial="hidden"
+                    animate="visible"
+                    className={
+                      i === NAME_LINES.length - 1 ? "gradient-text gradient-text--shimmer" : undefined
+                    }
+                  >
+                    {line}
+                  </motion.span>
+                </span>
+              ))}
+            </SquigglyText>
           </h1>
 
           <motion.p

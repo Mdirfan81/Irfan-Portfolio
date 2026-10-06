@@ -139,8 +139,17 @@
 }
 
 /* ---- Desktop links ---- */
+/* A slot the height of the dock at rest. The dock swells past it, evenly above
+   and below, so the bar around it never changes size. */
 .links {
+  --link-h: 36px;
   display: none;
+  align-items: center;
+  height: calc(var(--link-h) + 2 * var(--sp-1) + 2px);
+}
+
+.dock {
+  display: flex;
   align-items: center;
   gap: var(--sp-1);
   padding: var(--sp-1);
@@ -154,23 +163,36 @@
 }
 
 /* Inside the capsule the links no longer need a pill of their own. */
-.scrolled .links {
+.scrolled .dock {
   border-color: transparent;
   background-color: transparent;
   backdrop-filter: none;
 }
 
+/* --dock-scale is driven per link from Nav.tsx: 1 at rest, larger the nearer
+   the pointer is. The link grows with it and pushes its neighbours aside, while
+   --dock-squeeze takes the same total back out of every link's padding, so the
+   dock as a whole stays the width it was. */
 .link {
   position: relative;
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding-inline: var(--sp-4);
+  min-height: calc(var(--link-h) * var(--dock-scale, 1));
+  padding-inline: calc(var(--sp-4) - var(--dock-squeeze, 0px));
   border-radius: var(--r-pill);
   color: var(--c-text-muted);
   font-size: 0.875rem;
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease-out);
+}
+
+/* The text is scaled rather than re-set at a bigger size, which keeps it from
+   shimmering mid-swell. A transform claims no room, so the margin opens exactly
+   what the scaled text overhangs on each side. */
+.linkLabel {
+  display: inline-block;
+  margin-inline: calc(var(--dock-label, 0) * 1px * (var(--dock-scale, 1) - 1) / 2);
+  transform: scale(var(--dock-scale, 1));
 }
 
 .link:hover {

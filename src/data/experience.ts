@@ -13,7 +13,7 @@ export const experience: Role[] = [
   {
     id: 'lisec',
     company: 'Lisec Automation',
-    title: 'Software Engineer',
+    title: 'Senior Software Engineer',
     location: 'Dubai, UAE',
     period: 'May 2023 — Present',
     current: true,
@@ -31,7 +31,7 @@ export const experience: Role[] = [
   {
     id: 'capgemini',
     company: 'Capgemini Technology Services',
-    title: 'Software Engineer',
+    title: 'Senior Software Engineer',
     location: 'Hyderabad, India',
     period: 'Mar 2022 — May 2023',
     bullets: [
@@ -45,7 +45,7 @@ export const experience: Role[] = [
   {
     id: 'codekindle',
     company: 'CodeKindle Solutions',
-    title: 'Software Engineer',
+    title: 'Senior Software Engineer',
     location: 'Hyderabad, India',
     period: 'Oct 2020 — Mar 2022',
     bullets: [
@@ -57,7 +57,7 @@ export const experience: Role[] = [
   {
     id: 'kalyt',
     company: 'Kalyt Technologies',
-    title: 'Associate Software Engineer — Intern',
+    title: 'Associate Senior Software Engineer — Intern',
     location: 'Hyderabad, India',
     period: 'Sep 2020 — Oct 2020',
     bullets: [

@@ -5,12 +5,24 @@ import './styles/global.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { ErrorBoundary } from './components/ErrorBoundary'
+import { ErrorScreen } from './components/ErrorScreen'
 
 const rootEl = document.getElementById('root')
 if (!rootEl) throw new Error('Root element #root not found')
 
 createRoot(rootEl).render(
   <StrictMode>
-    <App />
+    {/* The last resort, for whatever the boundaries inside App do not cover:
+        the nav, the router, the app shell itself. */}
+    <ErrorBoundary
+      fallback={(error) => (
+        <main>
+          <ErrorScreen error={error} />
+        </main>
+      )}
+    >
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )

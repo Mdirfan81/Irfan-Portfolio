@@ -4,6 +4,13 @@
   z-index: var(--z-bg);
   pointer-events: none;
   overflow: hidden;
+  opacity: 0;
+  transition: opacity 1200ms var(--ease-out);
+}
+
+/* Set once the first frame is on the canvas. */
+.drawn {
+  opacity: 1;
 }
 
 .canvas {

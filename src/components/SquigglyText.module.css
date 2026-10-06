@@ -1,0 +1,38 @@
+.squiggle {
+  display: block;
+}
+
+/* Holds the filters only. Zero-sized rather than display:none, which some
+   browsers take as licence to drop the filters along with it. */
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* Outside this query the global reduced-motion rule would crush the loop to a
+   strobe, so there it simply never starts. */
+@media (prefers-reduced-motion: no-preference) {
+  .squiggle {
+    /* 5 frames at 80ms each. step-end: a frame is held, never blended. */
+    animation: squiggle 400ms step-end infinite;
+  }
+}
+
+@keyframes squiggle {
+  0% {
+    filter: var(--squiggle-0);
+  }
+  20% {
+    filter: var(--squiggle-1);
+  }
+  40% {
+    filter: var(--squiggle-2);
+  }
+  60% {
+    filter: var(--squiggle-3);
+  }
+  80% {
+    filter: var(--squiggle-4);
+  }
+}
