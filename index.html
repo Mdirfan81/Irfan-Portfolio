@@ -31,13 +31,9 @@
     <script>
       (function () {
         try {
-          var stored = localStorage.getItem("mik-theme");
+          var stored = localStorage.getItem("mik-theme-choice");
           document.documentElement.dataset.theme =
-            stored === "light" || stored === "dark"
-              ? stored
-              : matchMedia("(prefers-color-scheme: light)").matches
-                ? "light"
-                : "dark";
+            stored === "light" || stored === "dark" ? stored : "dark";
         } catch (e) {
           document.documentElement.dataset.theme = "dark";
         }

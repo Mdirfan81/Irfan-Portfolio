@@ -14,15 +14,20 @@ describe('useTheme', () => {
     expect(document.documentElement.dataset.theme).toBe('dark')
   })
 
+  it('stores nothing until the visitor makes a choice', () => {
+    renderHook(() => useTheme())
+    expect(window.localStorage.getItem('mik-theme-choice')).toBeNull()
+  })
+
   it('persists the chosen theme', () => {
     const { result } = renderHook(() => useTheme())
     act(() => result.current.toggle())
     expect(result.current.theme).toBe('light')
-    expect(window.localStorage.getItem('mik-theme')).toBe('light')
+    expect(window.localStorage.getItem('mik-theme-choice')).toBe('light')
   })
 
   it('restores a previously stored theme', () => {
-    window.localStorage.setItem('mik-theme', 'light')
+    window.localStorage.setItem('mik-theme-choice', 'light')
     const { result } = renderHook(() => useTheme())
     expect(result.current.theme).toBe('light')
   })
