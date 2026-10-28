@@ -65,12 +65,19 @@ journey is built; this file is the layer on top of that.
 - The loader lifts by itself after 6 seconds. A script that holds the 3D chunk
   longer than that will find the loader already gone.
 
-## Known problems, as of 2026-10-06
+## Known problems, as of 2026-10-22
 
-- `e2e/portfolio.spec.ts` "has no detectable WCAG 2.1 AA violations" fails on
-  both projects. The cause is `TextReveal`: words waiting to be revealed sit at
-  `opacity: 0.22`, and axe measures contrast on `aria-hidden` text too. It
-  failed before the changes described below and is unrelated to them.
+- The scene is heavy on the owner's machine. Measured on 2026-10-22 with the
+  real GPU, a warm load, wheel-scrolling the whole page: frames at about 33ms
+  median and 83ms at the 95th percentile. The commit before the redesign
+  (9b3d30f) measured worse the same day (50ms and 283ms), and switching the
+  dot-wave or Lenis off did not help, so the cost is the scene as it was. Not
+  investigated further. Without the scene the page holds 16.7ms throughout.
+- `e2e/portfolio.spec.ts` "has no detectable WCAG 2.1 AA violations" passes,
+  but under software rendering it takes 14 to 25s of its 30s budget on the
+  `chromium` project, so in a full run it occasionally times out. Every
+  failure seen on 2026-10-22 was a timeout, not a violation; rerun alone, it
+  passes.
 - `e2e/portfolio.spec.ts` "anchor navigation reaches each section" is flaky on
   the `mobile` project since the scene was enabled on phones (2026-10-07):
   about one run in three a section is not reached inside the 5s timeout. Under
@@ -173,6 +180,43 @@ the centre; on release the bubble bursts outward and the cover fades.
   hitch of 0.3 to 0.4s as the cover lifts, when Chrome compiles its own shaders
   for the page's blurs and filters. That one is not fixed.
 
+**Redesign of 2026-10-22.** The owner asked first for a copy of
+yasirshams.com, then, on seeing it, for something of their own built on the old
+deep-space look, with the 3D scene and "waves". What came of that:
+
+- *Dot-wave* (`Waves` in `JourneyScene.tsx`, `WAVE_*` in `shaders.ts`). A
+  grid of points under the flight, wrapped row by row as it rolls toward the
+  viewer, swelling with scroll speed and rippling out from under the pointer.
+  Strongest at the hero and contact stations, calmer between.
+- *Smooth scrolling* (`lib/smoothScroll.ts`). Lenis moves the real window
+  scroll, so `useScroll`, sticky positioning and the journey input all keep
+  working. It is stopped while the loader is up. `html:not(.lenis)` keeps the
+  native smooth scroll as the fallback; never have both on.
+- *Statement* (`sections/Statement.tsx`, no nav item or station). A pinned
+  sentence that lights up word by word through `ScrollFill`.
+- *Word fill* (`.fill-word` in `global.css`). Words are painted with
+  `background-clip: text` over transparent text, so axe sees an unmeasurable
+  background rather than low-contrast text. This is what fixed the old WCAG
+  failure; `ScrollHighlight` in About uses it too. Do not go back to dimming
+  words with `opacity`.
+- *Hero prompt.* The ending of "I build interfaces that make teams say" is typed
+  out from `profile.hero.endings`; screen readers get the sentence once.
+- *Impact* pins its heading and a large count-up of the row crossing the middle
+  of the screen; hover overrides it.
+- *Projects* pin and carry the row sideways, one pixel across per pixel down
+  (`HOLD` sets the pause before it moves). Below 760px wide, under 560px tall,
+  on a touch screen (no `hover: hover` and `pointer: fine`) or with reduced
+  motion it is a native swipe row instead. Touch was added on 2026-10-28:
+  pinned, a tablet ignored a sideways swipe on the cards. The swipe row
+  carries `data-lenis-prevent-horizontal` so a trackpad can scroll it, takes
+  focus for the arrow keys, and is dragged by a mouse (`lib/useDragScroll.ts`).
+  The owner checks the phone layout in a desktop browser with a mouse, so the
+  row must work there, not only under a finger.
+- *Letter roll* (`RollText`, `.roll-host`) on a few buttons.
+
+The owner rejected anything that reads as the reference: cream sections, gold,
+handwriting, all-caps headings, the counter preloader, the fluid-ink cursor.
+
 **Responsive layout.** The breakpoints, and what each one is for:
 
 | Width      | What changes                                                      |
@@ -196,6 +240,27 @@ screen taller than wide, `TALL_ANCHORS`, `TALL_SCALE` and `TALL_FADE` in
 smaller and at about half brightness; the blend between the two layouts is
 continuous in the aspect ratio.
 
+**Contact droid (`Droids.tsx`, `three/robots/RobotBuddy.tsx`, `lib/wreck.ts`).**
+Added 2026-10-27. The lane at the card's foot is only 112px, the owner having
+asked for less empty space. The droid's canvas (`.stage`) rises from the lane
+over the card as far as the highest `[data-perch]` button plus `HEADROOM`,
+measured by `useReach`. It takes no clicks; the droid listens on the
+`[data-droid-yard]` card and hit-tests its own projected box, and swallows a
+press on itself so a link behind it is not followed.
+
+- The camera's field of view follows the canvas height so one world unit stays
+  `PX_PER_UNIT` pixels. Page and plane are mapped with `onPlane`/`onStage`,
+  and buttons are re-measured from the live layout every frame it stands on one.
+- Its walks alternate at the owner's request: one on the ground, the next up
+  onto a button and back down. A trip is a `plan` of steps, so a click that
+  interrupts it does not lose the rest.
+- A double click fires a volley of three (`ROCKET_SLOTS`), one at each button.
+  On impact `wreck()` sets `data-wreck='broken'`, then `'mend'` 4.2s later.
+  The look is CSS on `.perch` in `Contact.module.css`: the two clip-path
+  polygons have the same points so the bite eases shut.
+- The glassy ball that follows the mouse in screenshots is `LiquidCursor`, not
+  something the droid left behind.
+
 **Error boundaries (`ErrorBoundary.tsx`, `ErrorScreen.tsx`).** Four of them,
 from the outside in:
 
@@ -210,6 +275,15 @@ Decoration gets `fallback={null}`. `ErrorScreen` uses a plain reload button and
 a `mailto:` link, not router links, because the router may be what broke.
 
 ## Traps
+
+- An absolutely positioned element is clipped by a scroller only if the
+  scroller is, or contains, its containing block. The projects row's
+  `.visually-hidden` "opens in a new tab" labels once escaped a non-positioned
+  `overflow-x: auto` row, were placed against the section instead, and
+  stretched a phone's page to 3,600px. Give a scroller `position: relative`.
+- Restored or checked-out files arrive with CRLF endings (`core.autocrlf` is
+  on), so a script matching multi-line text in them finds nothing. Convert the
+  working copy to LF first; git stores LF either way.
 
 - Do not import anything from `src/three/` into the main bundle, not even a
   small helper such as `rng`. It drags the module, and possibly three.js, out of

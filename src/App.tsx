@@ -8,6 +8,7 @@ import { ScrollProgress } from '@/components/ScrollProgress'
 import { Nav } from '@/components/Nav'
 import { StationRail } from '@/components/StationRail'
 import { useHashScroll } from '@/lib/useHashScroll'
+import { useSmoothScroll } from '@/lib/smoothScroll'
 import Home from '@/routes/Home'
 import NotFound from '@/routes/NotFound'
 
@@ -28,6 +29,7 @@ export function AppRoutes() {
 
 export default function App() {
   useHashScroll()
+  useSmoothScroll()
 
   return (
     <Router basename={import.meta.env.VITE_ROUTER === 'memory' ? undefined : import.meta.env.BASE_URL}>

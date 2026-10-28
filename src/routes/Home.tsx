@@ -1,4 +1,5 @@
 import { Hero } from '@/sections/Hero'
+import { Statement } from '@/sections/Statement'
 import { About } from '@/sections/About'
 import { Metrics } from '@/sections/Metrics'
 import { Skills } from '@/sections/Skills'
@@ -11,6 +12,7 @@ export default function Home() {
   return (
     <>
       <Hero />
+      <Statement />
       <About />
       <Metrics />
       <Skills />

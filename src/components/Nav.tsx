@@ -71,7 +71,7 @@ function DockLink({ item, isActive, pointerX, reduced, onSwell }: DockLinkProps)
   return (
     <motion.a
       ref={ref}
-      href={`#${item.id}`}
+      href={item.href}
       className={`${styles.link} ${isActive ? styles.linkActive : ''}`}
       aria-current={isActive ? 'true' : undefined}
       style={{ '--dock-scale': scale, '--dock-label': labelWidth } as MotionStyle}
@@ -248,7 +248,7 @@ export function Nav() {
             {navItems.map((item, i) => (
               <a
                 key={item.id}
-                href={`#${item.id}`}
+                href={item.href}
                 className={styles.sheetLink}
                 onClick={() => setOpen(false)}
               >

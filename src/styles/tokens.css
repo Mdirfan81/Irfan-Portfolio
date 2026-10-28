@@ -29,6 +29,10 @@
   --c-violet: #a98bff; /* 7.2:1 */
   --c-cyan: #4fd8e8; /* 11.6:1 */
   --c-mint: #5eead4;
+  /* The duck droids' bills and feet: the one warm colour on the page. */
+  --c-amber: #ffb86b;
+  /* The contact droid's eyes when it is cross, and its rockets' blast. */
+  --c-danger: #ff5d6c;
   --c-on-accent: #05101f; /* text sitting on a filled accent button */
 
   /* Semantic */
@@ -132,6 +136,8 @@
   --c-violet: #6d28d9; /* 7.9:1 */
   --c-cyan: #0e7490;
   --c-mint: #0f766e;
+  --c-amber: #c2410c;
+  --c-danger: #dc2626;
   --c-on-accent: #ffffff;
   --c-focus: #1d4ed8;
   --c-specular: var(--c-accent);

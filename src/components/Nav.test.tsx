@@ -16,7 +16,7 @@ describe('Nav', () => {
     navItems.forEach((item) => {
       expect(within(nav).getByRole('link', { name: item.label })).toHaveAttribute(
         'href',
-        `#${item.id}`,
+        item.href,
       )
     })
   })

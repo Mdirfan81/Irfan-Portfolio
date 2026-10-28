@@ -11,6 +11,8 @@ import {
   SCREEN_VERTEX,
   STAR_FRAGMENT,
   STAR_VERTEX,
+  WAVE_FRAGMENT,
+  WAVE_VERTEX,
 } from "./shaders";
 import type { JourneyInput } from "@/lib/useJourneyInput";
 import type { ThemeColors } from "@/lib/useThemeColors";
@@ -505,6 +507,108 @@ function Constellation({ colors, quality, still, flightRef }: Layer) {
   );
 }
 
+/* ── Dot-wave ───────────────────────────────────────────────────────────────
+   A sea of points under the flight. It rolls toward the viewer as the page
+   scrolls, swells higher the faster the scroll goes, and rings out from
+   wherever the pointer is. It runs strongest at the two ends of the journey,
+   the hero and the contact section, and lies calmer under the sections in
+   between, where it would otherwise compete with the reading. */
+const WAVE_Y = -3.3;
+const WAVE_DEPTH = 46;
+const WAVE_WIDTH = 44;
+
+function Waves({ colors, quality, still, flightRef, input }: Layer & { input: RefObject<JourneyInput> }) {
+  const points = useRef<THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial>>(null);
+  const palette = usePalette(colors);
+  const columns = quality === "high" ? 150 : 90;
+  const rows = quality === "high" ? 84 : 52;
+  const row = WAVE_DEPTH / rows;
+  const ripple = useRef({ x: 0, z: -12, strength: 0 });
+
+  const position = useMemo(() => {
+    const array = new Float32Array(columns * rows * 3);
+    let i = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < columns; c++) {
+        // Every other row shifted half a step, so the grid reads as a weave
+        // rather than as ruled lines.
+        array[i++] = ((c + (r % 2) * 0.5) / (columns - 1) - 0.5) * WAVE_WIDTH;
+        array[i++] = WAVE_Y;
+        // From just past where the nearest dots have faded out, inward.
+        array[i++] = CAMERA_Z - 3 - r * row;
+      }
+    }
+    return array;
+  }, [columns, rows, row]);
+
+  const uniforms = useMemo(
+    () => ({
+      uTime: { value: 0 },
+      uTravel: { value: 0 },
+      uRow: { value: 1 },
+      uDepth: { value: WAVE_DEPTH },
+      uSwell: { value: 1 },
+      uPixels: { value: 1 },
+      uOpacity: { value: 0 },
+      uRipple: { value: new THREE.Vector3() },
+      uLight: { value: 0 },
+      uTone: { value: new THREE.Color() },
+      uAlt: { value: new THREE.Color() },
+      uCore: { value: new THREE.Color() },
+    }),
+    [],
+  );
+
+  useFrame((state, delta) => {
+    const object = points.current;
+    if (!object) return;
+    const dt = Math.min(delta, 0.05);
+    const f = flightRef.current;
+    const { from, mix } = leg(f.station);
+
+    // 1 at either end of the journey, 0 through the middle.
+    const ends = THREE.MathUtils.clamp(Math.max(1 - f.station, f.station - (LAST - 1)), 0, 1);
+
+    // The ripple follows the pointer onto the water: across with its x, and
+    // nearer the viewer the lower it is on the screen.
+    const { px, py } = input.current;
+    const r = ripple.current;
+    r.x = damp(r.x, px * 11, 3, dt);
+    r.z = damp(r.z, THREE.MathUtils.lerp(-24, 1, (py + 1) / 2), 3, dt);
+    r.strength = damp(r.strength, still ? 0 : 1, 2, dt);
+
+    const u = object.material.uniforms;
+    u.uTime.value = still ? 0 : state.clock.elapsedTime;
+    u.uTravel.value = f.travel * 0.6;
+    u.uRow.value = row;
+    u.uSwell.value = (0.7 + 0.3 * ends) * (1 + Math.min(Math.abs(f.velocity), 3) * 0.35);
+    u.uPixels.value = pixelsPerUnit(state);
+    u.uOpacity.value = (palette.light ? 0.5 : 0.85) * (0.55 + 0.45 * ends) * f.intro;
+    u.uRipple.value.set(r.x, r.z, r.strength);
+    u.uLight.value = palette.light ? 1 : 0;
+    u.uTone.value.copy(palette.stations[from]).lerp(palette.stations[from + 1], mix);
+    u.uAlt.value.copy(from % 2 ? palette.tone.violet : palette.tone.cyan);
+    u.uCore.value.copy(palette.star);
+  });
+
+  return (
+    <points ref={points} frustumCulled={false} renderOrder={-5}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[position, 3]} />
+      </bufferGeometry>
+      <shaderMaterial
+        vertexShader={WAVE_VERTEX}
+        fragmentShader={WAVE_FRAGMENT}
+        uniforms={uniforms}
+        transparent
+        depthWrite={false}
+        depthTest={false}
+        blending={palette.blending}
+      />
+    </points>
+  );
+}
+
 /* ── Warm-up ────────────────────────────────────────────────────────────────
    Compiles every shader before the first frame is asked for. Left to the first
    frame, compilation is synchronous: the nebula alone holds the GPU for most of
@@ -564,6 +668,7 @@ export function JourneyScene({ input, colors, quality, still, onWarm }: ScenePro
         buffer={nebulaBuffer}
       />
       <Stars colors={colors} quality={quality} still={still} flightRef={flightRef} />
+      <Waves colors={colors} quality={quality} still={still} flightRef={flightRef} input={input} />
       <Constellation colors={colors} quality={quality} still={still} flightRef={flightRef} />
       <Warmup buffer={nebulaBuffer} onWarm={onWarm} />
     </>

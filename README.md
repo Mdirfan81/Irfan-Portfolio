@@ -12,7 +12,7 @@ enforced by tests rather than assumed.
 | ---------- | ------------------------------------------- |
 | UI         | React 19, TypeScript                        |
 | Build      | Vite 8                                      |
-| Motion     | Motion (`motion/react`)                     |
+| Motion     | Motion (`motion/react`), Lenis smooth scroll |
 | 3D         | three.js + React Three Fiber (code-split)   |
 | Routing    | React Router 8                              |
 | Icons      | Lucide React                                |
@@ -52,7 +52,7 @@ src/
   styles/global.css     Reset, layout primitives, shared .btn / .chip / .glass.
   data/                 All site content. Edit here, not in components.
   lib/                  Hooks: theme, active section, count-up, hash scroll, motion variants. Engines: scroll flow, liquid cursor, page loader.
-  components/           Nav, StationRail, Backdrop, AuroraBackground, JourneyLoader, LiquidCursor, SquigglyText, TiltCard, Flow, Reveal, Marquee, ScrollProgress, ErrorBoundary, ErrorScreen.
+  components/           Nav, StationRail, Backdrop, AuroraBackground, JourneyLoader, LiquidCursor, SquigglyText, TiltCard, Flow, Reveal, RollText, TextReveal, Marquee, ScrollProgress, ErrorBoundary, ErrorScreen.
   three/                The journey: stations, scene, canvas wrapper, performance guard.
   sections/             One file per page section, each with its own CSS module.
   routes/               Home and NotFound.
@@ -102,6 +102,9 @@ about 16:1, muted text at 8:1, and accents at 7:1 or better in both themes.
 - **Nebula** — domain-warped noise, drawn into a small off-screen buffer and
   stretched over the view, tinted by the current station and brightest behind
   the constellation.
+- **Dot-wave** — a sea of points under the flight that rolls toward the viewer
+  with the scroll, swells when the scroll is fast and rings out from under the
+  pointer; strongest at the hero and the contact section.
 - **Star field** — distant stars that wrap endlessly; scroll speed stretches
   them into streaks, so a fast scroll reads as a jump between stations.
 - **Pilot** — eases raw scroll and pointer input into the flight state every
@@ -138,6 +141,12 @@ no wait; for them the scene, where there is one, still loads only after the
 page has.
 
 ## Motion
+
+Scrolling itself is eased by Lenis, which moves the real window scroll, so
+everything below reads it as usual. Three sections pin while the scroll runs
+through them: a statement under the hero that lights up word by word, Impact,
+whose large figure counts up to whichever row is being read, and Projects,
+whose row of cards the scroll carries sideways.
 
 Four DOM layers on top of the scene, all opacity/transform only:
 
@@ -195,9 +204,9 @@ Checked in CI by `e2e/portfolio.spec.ts`:
 
 | Chunk                    | Raw    | gzip   |
 | ------------------------ | ------ | ------ |
-| App                      | 413 KB | 133 KB |
-| Journey (three.js, lazy) | 887 KB | 236 KB |
-| CSS                      | 32 KB  | 7 KB   |
+| App                      | 468 KB | 152 KB |
+| Journey (three.js, lazy) | 929 KB | 250 KB |
+| CSS                      | 44 KB  | 10 KB  |
 
 The 3D chunk is fetched only once the WebGL and Save-Data checks pass, so a
 visitor who has asked their browser to save data never downloads it.

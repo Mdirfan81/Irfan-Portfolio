@@ -15,10 +15,25 @@
 }
 
 html {
-  scroll-behavior: smooth;
   /* nav height + breathing room, so anchor targets are never hidden */
   scroll-padding-top: 6rem;
   -webkit-text-size-adjust: 100%;
+}
+
+/* Smooth scrolling is Lenis's job when it runs (lib/smoothScroll.ts). Native
+   smooth scrolling is only the fallback; with both on, every anchor jump
+   would be eased twice and stutter. */
+html:not(.lenis) {
+  scroll-behavior: smooth;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-stopped {
+  overflow: clip;
 }
 
 body {
@@ -135,6 +150,13 @@ ol {
   max-width: var(--max-w);
   margin-inline: auto;
   padding-inline: var(--gutter);
+}
+
+/* Tilted cards and drifting decoration reach a little past the edges by
+   design. Clipped here, so a phone never zooms out to fit them. 'clip' rather
+   than 'hidden': it makes no scroll container, so sticky sections still pin. */
+main {
+  overflow-x: clip;
 }
 
 .section {
@@ -343,6 +365,22 @@ html.liquid-cursor * {
     opacity: calc(var(--flow-in) * 1.6);
   }
 
+  /* Swings open from its left edge, hinged on the timeline it hangs from, and
+     tips away the other way as it leaves. The glass card is the element
+     itself, so it does not fade: its contents do, as with `left`. */
+  .flow--swing[data-flow='live'] {
+    transform-origin: 0 50%;
+    transform: perspective(1300px)
+      translate3d(calc(var(--flow-away) * -1.5rem), calc(var(--flow-away) * 2.5rem - var(--flow-out) * 1.5rem), 0)
+      rotateY(calc(var(--flow-away) * 42deg - var(--flow-out) * 8deg))
+      rotateX(calc(var(--flow-out) * 6deg))
+      scale(calc(1 - var(--flow-away) * 0.06 - var(--flow-out) * 0.04));
+  }
+
+  .flow--swing[data-flow='live'] > * {
+    opacity: calc(var(--flow-in) * 1.5);
+  }
+
   /* No travel at all, for the last block on the page: moving it down would
      lengthen the document it is trying to reach the end of. */
   .flow--zoom[data-flow='live'] {
@@ -486,4 +524,71 @@ html.liquid-cursor * {
 
 ::-webkit-scrollbar-thumb:hover {
   background: color-mix(in oklab, var(--c-accent) 60%, transparent);
+}
+
+/* ==========================================================================
+   Scroll fill — words that light up as the scroll reaches them.
+   The colour is painted through background-clip rather than set with
+   `color`, and the text itself is transparent. Assistive tech reads a
+   visually hidden copy of the sentence; contrast checkers see a painted
+   background they cannot measure, instead of flagging the words that are
+   still waiting their turn as low-contrast text.
+   ========================================================================== */
+.fill-word {
+  --fill: var(--c-text);
+  --pending: color-mix(in oklab, var(--c-text) 20%, transparent);
+  color: transparent;
+  background-image: linear-gradient(90deg, var(--fill) 50%, var(--pending) 50%);
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  transition: background-position 0.6s var(--ease-out);
+}
+
+.fill-word[data-on] {
+  background-position: 0 0;
+}
+
+/* ==========================================================================
+   Letter roll — a label whose letters slide up and are replaced from below,
+   one after another. RollText renders the letters; the parent that should
+   trigger the roll gets .roll-host.
+   ========================================================================== */
+.roll {
+  display: inline-flex;
+  line-height: 1.15;
+}
+
+.roll-letter {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.roll-letter > span {
+  position: relative;
+  display: block;
+  transition: transform 0.7s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 0.025s);
+}
+
+/* The copy that rolls in, waiting one line below and tipped back. */
+.roll-letter > span::after {
+  content: attr(data-letter);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  transform: rotateX(-18deg);
+  transform-origin: center top;
+}
+
+@media (hover: hover) {
+  .roll-host:hover .roll-letter > span {
+    transform: translate3d(0, -100%, 0);
+  }
+}
+
+.roll-host:focus-visible .roll-letter > span {
+  transform: translate3d(0, -100%, 0);
 }

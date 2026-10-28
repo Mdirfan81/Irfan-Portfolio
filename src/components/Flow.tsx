@@ -7,11 +7,12 @@ type FlowProps = {
   as?: 'div' | 'li' | 'article'
   /**
    * How the element moves as it flows:
-   * `rise` tilts up from below, `left` slides in from the side, `zoom` grows
-   * into place, `step` is a small nudge for a line inside a larger block, and
+   * `rise` tilts up from below, `left` slides in from the side, `swing` opens
+   * out from its left edge like a door, `zoom` grows into place, `step` is a
+   * small nudge for a line inside a larger block, and
    * `none` only publishes the flow properties for its own CSS to use.
    */
-  kind?: 'rise' | 'left' | 'zoom' | 'step' | 'none'
+  kind?: 'rise' | 'left' | 'swing' | 'zoom' | 'step' | 'none'
 }
 
 /**

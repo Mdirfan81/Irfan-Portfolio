@@ -1,0 +1,117 @@
+/* ---- The droid along the foot of the contact card ---- */
+/* Runs down through the card's bottom padding (--panel-pad, set by Contact),
+   so the ground it walks on is the card's own bottom edge, lit along its
+   length. Only as tall as the droid: it reaches the buttons above through
+   its stage, not by taking up room. */
+.lane {
+  position: relative;
+  height: 112px;
+  margin-top: var(--sp-3);
+  margin-bottom: calc(-1 * var(--panel-pad, 0px));
+  border-bottom: 1px solid color-mix(in oklab, var(--c-accent) 45%, transparent);
+}
+
+/* Where the droid is drawn: the lane, and as far up over the card as its
+   buttons reach (--stage-up, measured by DroidBuddy). It lies on top of the
+   content and lets every click through. */
+.stage {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: calc(100% + var(--stage-up, 0px));
+  pointer-events: none;
+}
+
+.stage canvas {
+  display: block;
+}
+
+/* What it says, in a bubble that rides above its head. The droid sets --x and
+   --y, in pixels from the stage's bottom left, and --tail when the bubble is
+   held in from the edge so the tail still points at it. */
+.bubble {
+  --x: 50%;
+  --y: 110px;
+  --tail: 0px;
+  position: absolute;
+  left: var(--x);
+  bottom: var(--y);
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--c-hairline-strong);
+  border-radius: var(--r-md);
+  background: var(--c-bg-raised);
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 8px) scale(0.9);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+/* The tail of the bubble, pointing down at the speaker. */
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: calc(50% + var(--tail));
+  bottom: -5px;
+  width: 9px;
+  height: 9px;
+  translate: -50% 0;
+  rotate: 45deg;
+  border-right: 1px solid var(--c-hairline-strong);
+  border-bottom: 1px solid var(--c-hairline-strong);
+  background: var(--c-bg-raised);
+}
+
+.bubble[data-show] {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+/* Asleep, the letters drift up and away one after another. */
+.bubble[data-sleep] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--c-violet);
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+}
+
+.bubble[data-sleep]::after {
+  display: none;
+}
+
+/* Cross, it shouts in red. */
+.bubble[data-angry],
+.bubble[data-angry]::after {
+  border-color: color-mix(in oklab, var(--c-danger) 65%, transparent);
+}
+
+.bubble[data-angry] {
+  color: var(--c-danger);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bubble[data-sleep] {
+    animation: drift 2.4s var(--ease-out) infinite;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translate(-30%, 6px) scale(0.8);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(-60%, -18px) scale(1.15);
+    opacity: 0;
+  }
+}

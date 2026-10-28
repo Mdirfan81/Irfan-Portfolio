@@ -1,20 +1,59 @@
+.projects {
+  position: relative;
+  z-index: var(--z-content);
+}
+
+/* ---- Pinned: the row carried sideways by the scroll ---- */
+.run {
+  position: relative;
+}
+
+.run .pin {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-6);
+  height: 100svh;
+  padding-block: var(--sp-9) var(--sp-6);
+  overflow: hidden;
+}
+
+/* ---- Flat: the row scrolls under a finger ---- */
+.flat .pin {
+  display: grid;
+  gap: var(--sp-6);
+  padding-block: var(--section-y);
+}
+
 .head {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--sp-4);
+  gap: var(--sp-5);
 }
 
+/* The heading gives way on short screens, so the row keeps its room. */
+.run .head :global(.section-title) {
+  font-size: min(var(--t-h2), 7svh);
+}
+
+.run .head :global(.section-lede) {
+  display: none;
+}
+
+/* ---- Filters ---- */
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  margin-top: var(--sp-5);
 }
 
 .filter {
   position: relative;
+  isolation: isolate;
   min-height: 44px;
   padding-inline: var(--sp-4);
   border: 1px solid var(--c-hairline);
@@ -53,43 +92,69 @@
   color: var(--c-text-subtle);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+/* ---- The row ---- */
+/* Positioned so it is the containing block for what is absolutely placed
+   inside it — the hidden "opens in a new tab" labels among them. Without it
+   they are placed against the section, outside this scroller, and stretch
+   the page to the full width of the row. */
+.view {
+  position: relative;
+  min-width: 0;
+}
+
+.flat .view {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--gutter);
+  scrollbar-width: none;
+}
+
+/* A mouse drags the row (useDragScroll), so it shows a hand. */
+@media (hover: hover) and (pointer: fine) {
+  .flat .view {
+    cursor: grab;
+  }
+
+  .flat .view[data-dragging] {
+    cursor: grabbing;
+    user-select: none;
+  }
+}
+
+.track {
+  display: flex;
+  align-items: stretch;
   gap: var(--sp-4);
-  margin-top: var(--sp-5);
+  width: max-content;
+  padding-block: var(--sp-3);
+  /* Starts in line with the heading and runs out to the window's edge. */
+  padding-inline: max(var(--gutter), calc((100vw - var(--max-w)) / 2 + var(--gutter)));
 }
 
-/* The flow wrapper sits between the grid item and the card, and has to pass
-   the row's height on so every card in a row ends level. */
-.fill {
-  height: 100%;
-}
-
-/* Featured work reads through emphasis, not through a wider track — an uneven
-   span leaves holes in an auto-fill grid whenever the column count shifts. */
-.featuredCard {
-  border-color: color-mix(in oklab, var(--c-accent) 40%, transparent) !important;
-  box-shadow: var(--shadow-glow);
-}
-
-.star {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--c-accent);
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.slot {
+  flex: none;
+  display: flex;
+  width: min(84vw, 23rem);
+  scroll-snap-align: start;
 }
 
 .card {
   display: flex;
+  width: 100%;
+  padding: var(--sp-5);
+}
+
+.article {
+  display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-  padding: var(--sp-5);
-  height: 100%;
+  width: 100%;
+}
+
+.featuredCard {
+  border-color: color-mix(in oklab, var(--c-accent) 40%, transparent) !important;
+  box-shadow: var(--shadow-glow);
 }
 
 .cardHead {
@@ -103,8 +168,8 @@
   display: grid;
   place-items: center;
   flex: none;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: var(--r-md);
   border: 1px solid var(--c-hairline-strong);
   background: linear-gradient(
@@ -115,19 +180,41 @@
   color: var(--c-text);
 }
 
+/* A large outlined number, like an entry in a star catalogue. */
+.index {
+  color: transparent;
+  font-family: var(--font-display);
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  -webkit-text-stroke: 1px var(--c-hairline-strong);
+}
+
+.star,
 .domain {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.star {
+  color: var(--c-accent);
+}
+
+.domain {
   color: var(--c-text-subtle);
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .org {
@@ -136,10 +223,10 @@
 }
 
 .summary {
+  flex: 1;
   font-size: var(--t-sm);
   color: var(--c-text-muted);
   line-height: 1.6;
-  flex: 1;
 }
 
 .tags {
@@ -150,9 +237,105 @@
   border-top: 1px solid var(--c-hairline);
 }
 
-.empty {
-  padding: var(--sp-7);
-  text-align: center;
-  color: var(--c-text-muted);
+/* ---- The last card: on to GitHub ---- */
+.more {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  width: 100%;
+  padding: var(--sp-6) var(--sp-5);
+  border: 1px dashed var(--c-hairline-strong);
+  border-radius: var(--r-lg);
+  color: var(--c-text);
+  text-decoration: none;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
 }
 
+.more:hover {
+  border-color: color-mix(in oklab, var(--c-accent) 60%, transparent);
+  background: var(--c-glass);
+}
+
+.moreBig {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.6rem + 2vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.moreLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+}
+
+/* How far through the row the scroll has carried it. */
+.progress {
+  height: 2px;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--c-accent), var(--c-violet), var(--c-cyan));
+  transform-origin: left center;
+}
+
+/* ---- Dissolving into the stars ----
+   Projects.tsx sets --gone on a card as the row carries it off to the left.
+   The card breaks into a halftone of round dots, swept in from its left edge;
+   the dots light up like stars, then shrink to nothing. The mask is applied
+   only while a card is going, so cards at rest are drawn as plain cards. */
+.dissolve {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.slot[data-gone] .dissolve {
+  /* Dot radius: 7.5px fills a 10px cell completely; 0 is nothing left. */
+  --dot: calc((1 - var(--gone)) * 7.5px);
+  /* Where the halftone has reached, from the card's left edge to its right. */
+  --sweep: calc(var(--gone) * 150% - 30%);
+  mask-image:
+    linear-gradient(90deg, transparent var(--sweep), #000 calc(var(--sweep) + 30%)),
+    radial-gradient(circle, #000 var(--dot), transparent calc(var(--dot) + 0.6px));
+  mask-size:
+    100% 100%,
+    10px 10px;
+  mask-repeat: no-repeat, repeat;
+  transform: translate3d(0, calc(var(--gone) * -1.25rem), 0) scale(calc(1 - var(--gone) * 0.08));
+  transform-origin: 0 50%;
+}
+
+/* The light in each dot: a point of the accent at the centre of every cell,
+   strongest halfway through, so the card reads as turning into stars. */
+.slot[data-gone] .dissolve::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+  background: radial-gradient(
+      circle,
+      color-mix(in oklab, var(--c-cyan) 90%, white) 0 1.1px,
+      color-mix(in oklab, var(--c-accent) 55%, transparent) 1.6px,
+      transparent 3.2px
+    )
+    0 0 / 10px 10px;
+  opacity: calc(min(var(--gone) * 3, 1) * 0.9);
+  pointer-events: none;
+}
+
+.slot[data-gone='all'] {
+  visibility: hidden;
+}

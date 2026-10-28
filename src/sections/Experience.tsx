@@ -25,7 +25,7 @@ export function Experience() {
                 className={`${styles.node} ${role.current ? styles.nodeCurrent : ''}`}
                 aria-hidden="true"
               />
-              <Flow as="article" className={`glass ${styles.card}`}>
+              <Flow as="article" kind="swing" className={`glass ${styles.card}`}>
                 <div className={styles.head}>
                   <h3 className={styles.company}>{role.company}</h3>
                   <span className={styles.period}>{role.period}</span>

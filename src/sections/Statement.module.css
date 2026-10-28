@@ -1,0 +1,48 @@
+/* Taller than the screen, so the sentence can stay pinned while the scroll
+   that lights it up goes by. No ground of its own: the stars show through. */
+.statement {
+  position: relative;
+  z-index: var(--z-content);
+  min-height: 190svh;
+}
+
+.pin {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-content: center;
+  min-height: 100svh;
+  padding-block: var(--sp-9) var(--sp-7);
+}
+
+.text {
+  margin-top: var(--sp-4);
+  max-width: 22ch;
+  font-size: clamp(2rem, 0.9rem + 4.4vw, 5.25rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+/* The ending, lit in the accent and set as code. */
+.accent {
+  --fill: var(--c-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+/* Nothing to scroll through when the words are simply all there. */
+@media (prefers-reduced-motion: reduce) {
+  .statement {
+    min-height: 0;
+  }
+
+  .pin {
+    position: static;
+    min-height: 0;
+    padding-block: var(--section-y);
+  }
+}

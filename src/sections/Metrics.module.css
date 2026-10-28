@@ -1,51 +1,51 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-  gap: var(--sp-4);
-  margin-top: var(--sp-6);
+  gap: var(--sp-7);
 }
 
-.card {
+/* The large figure only has room beside the list. */
+.big {
+  display: none;
+}
+
+.list {
   display: grid;
-  align-content: start;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: var(--sp-2) var(--sp-5);
   padding: var(--sp-5);
-  height: 100%;
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
 }
 
 .value {
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 2rem + 2.4vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  background: var(--grad-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  /* Reserve the line box so the count-up never shifts layout (CLS) */
-  min-height: 1em;
+  font-family: var(--font-mono);
+  font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--c-accent);
   font-variant-numeric: tabular-nums;
 }
 
 .label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--c-text);
+  font-size: var(--t-h3);
+  line-height: 1.2;
 }
 
 .detail {
-  font-size: var(--t-sm);
+  margin-top: var(--sp-1);
   color: var(--c-text-muted);
-  line-height: 1.55;
+  font-size: var(--t-sm);
 }
 
-/* A track under each figure that fills as the card flows in. A percentage
-   fills its own share, so the cards can be compared at a glance. */
 .meter {
-  display: block;
-  height: 3px;
-  margin-top: var(--sp-3);
+  grid-column: 1 / -1;
+  height: 2px;
   border-radius: var(--r-pill);
   background: var(--c-hairline);
   overflow: hidden;
@@ -54,8 +54,60 @@
 .meterFill {
   display: block;
   height: 100%;
-  border-radius: inherit;
   background: linear-gradient(90deg, var(--c-accent), var(--c-violet), var(--c-cyan));
-  transform-origin: 0 50%;
-  transform: scaleX(calc(var(--share, 1) * var(--flow-in)));
+  transform-origin: left center;
+}
+
+/* The row being read is the one shown large, and is lit to match. */
+.rowActive {
+  border-color: color-mix(in oklab, var(--c-accent) 45%, transparent);
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: var(--sp-8);
+  }
+
+  /* Pinned beside the list while it scrolls past. */
+  .aside {
+    position: sticky;
+    top: calc(var(--sp-10) - var(--sp-2));
+  }
+
+  .big {
+    display: block;
+    margin-top: var(--sp-7);
+  }
+
+  .bigValue {
+    font-family: var(--font-display);
+    font-size: clamp(5rem, 2rem + 7vw, 10rem);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    /* Room for the gradient under the descender-less digits. */
+    padding-bottom: 0.05em;
+  }
+
+  .bigLabel {
+    display: flex;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-text-muted);
+  }
+
+  .bigIndex {
+    color: var(--c-accent);
+  }
+
+  .rowActive {
+    transform: translateX(-0.5rem);
+  }
 }

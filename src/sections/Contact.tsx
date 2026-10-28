@@ -7,6 +7,7 @@ import {
   Mail,
 } from "lucide-react";
 import { profile } from "@/data/profile";
+import { DroidBuddy } from "@/components/Droids";
 import { Flow } from "@/components/Flow";
 import { flowPart } from "@/lib/flow";
 import { Eyebrow, SplitText } from "@/components/TextReveal";
@@ -70,7 +71,11 @@ export function Contact() {
         />
 
         <Flow kind="zoom">
-          <div className={`glass ${styles.panel}`}>
+          {/* The droid at its foot listens on the whole card and jumps onto the
+              buttons marked as perches. */}
+          <div className={`glass ${styles.panel}`} data-droid-yard>
+            {/* A beam of light that runs round the card's edge. */}
+            <span className={styles.beam} aria-hidden="true" />
             <div className={styles.inner}>
               <div>
                 <p className={`${styles.headline} gradient-text gradient-text--shimmer`}>
@@ -83,25 +88,28 @@ export function Contact() {
                 </p>
                 <div className={styles.ctas}>
                   <a
-                    className="btn btn--primary"
+                    className={`btn btn--primary ${styles.perch}`}
                     href={`mailto:${profile.email}`}
+                    data-perch
                   >
                     <Mail size={16} aria-hidden />
                     Email me
                   </a>
                   <a
-                    className="btn"
+                    className={`btn ${styles.perch}`}
                     href={profile.links.linkedin}
                     target="_blank"
                     rel="noreferrer"
+                    data-perch
                   >
                     <BriefcaseBusiness size={16} aria-hidden />
                     Connect on LinkedIn
                   </a>
                   <a
-                    className="btn"
+                    className={`btn ${styles.perch}`}
                     href={profile.resume.url}
                     download={profile.resume.fileName}
+                    data-perch
                   >
                     <Download size={16} aria-hidden />
                     Download Resume
@@ -144,6 +152,7 @@ export function Contact() {
                 })}
               </ul>
             </div>
+            <DroidBuddy />
           </div>
         </Flow>
 

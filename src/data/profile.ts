@@ -14,6 +14,20 @@ export const profile = {
     "Senior Software Engineer with 6+ years shipping scalable, high-performance web applications across FinTech, banking and enterprise automation in the GCC and global markets. I work in React and TypeScript, lean on micro-frontend architecture at scale, and stay comfortable in Node.js microservices when a feature needs the whole slice.",
   summarySecondary:
     "Most of my impact comes from the boring things done well: a design system nobody fights, a CI pipeline that catches regressions, and a performance budget the team actually keeps. Lately I have been building internal AI coding agents that understand a codebase well enough to write code that fits it.",
+  // The hero. The prompt line types out each ending in turn, like a terminal
+  // finishing the sentence.
+  hero: {
+    prompt: "I build interfaces that make teams say",
+    endings: ["ship it.", "that was fast.", "it just works.", "zero regressions."],
+    cue: "Scroll",
+  },
+  // The statement under the hero, which lights up word by word as it scrolls
+  // past, ending on the accent in code type.
+  statement: {
+    label: "What I do",
+    text: "I build fast, accessible React and TypeScript interfaces, design systems that hold, and pipelines that catch regressions — so products feel effortless and teams can",
+    accent: "ship it.",
+  },
   email: "mdirfankhan98455@gmail.com",
   resume: {
     // Vite fingerprints the file, so the download name is set explicitly.
@@ -27,12 +41,15 @@ export const profile = {
   },
 } as const;
 
+// `id` is the section a link stands for (what the nav lights up); `href` is
+// where clicking it goes. About goes to the very top, so the name and the
+// introduction under it are read first.
 export const navItems = [
-  { id: "about", label: "About" },
-  { id: "impact", label: "Impact" },
-  { id: "skills", label: "Skills" },
-  { id: "experience", label: "Experience" },
-  { id: "projects", label: "Projects" },
-  { id: "writing", label: "Writing" },
-  { id: "contact", label: "Contact" },
+  { id: "about", label: "About", href: "#top" },
+  { id: "impact", label: "Impact", href: "#impact" },
+  { id: "skills", label: "Skills", href: "#skills" },
+  { id: "experience", label: "Experience", href: "#experience" },
+  { id: "projects", label: "Projects", href: "#projects" },
+  { id: "writing", label: "Writing", href: "#writing" },
+  { id: "contact", label: "Contact", href: "#contact" },
 ] as const;

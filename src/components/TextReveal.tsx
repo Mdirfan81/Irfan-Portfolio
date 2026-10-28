@@ -1,5 +1,11 @@
 import { Fragment, useRef, type ReactNode } from 'react'
-import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } from 'motion/react'
+import {
+  motion,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+  type MotionValue,
+} from 'motion/react'
 import { EASE_OUT, viewportOnce } from '@/lib/motion'
 
 type HeadingTag = 'h1' | 'h2' | 'h3' | 'p'
@@ -15,7 +21,7 @@ export function SplitText({
   id,
   className,
   delay = 0,
-  stagger = 0.05,
+  stagger = 0.06,
 }: {
   text: string
   as?: HeadingTag
@@ -49,12 +55,12 @@ export function SplitText({
             <motion.span
               className="split-word"
               variants={{
-                hidden: reduced ? { opacity: 0 } : { y: '110%', rotate: 4 },
+                hidden: reduced ? { opacity: 0 } : { y: '110%', rotate: 6 },
                 visible: {
                   y: 0,
                   rotate: 0,
                   opacity: 1,
-                  transition: reduced ? { duration: 0.2 } : { duration: 0.7, ease: EASE_OUT },
+                  transition: reduced ? { duration: 0.2 } : { duration: 0.9, ease: EASE_OUT },
                 },
               }}
             >
@@ -71,12 +77,12 @@ export function SplitText({
 }
 
 /** Eyebrow label: the accent rule draws across, then the label slides in after it. */
-export function Eyebrow({ children }: { children: ReactNode }) {
+export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
   const reduced = useReducedMotion() ?? false
 
   return (
     <motion.p
-      className="eyebrow eyebrow--animated"
+      className={`eyebrow eyebrow--animated ${className ?? ''}`}
       initial="hidden"
       whileInView="visible"
       viewport={viewportOnce}
@@ -121,10 +127,10 @@ export function FadeText({
   return (
     <motion.p
       className={className}
-      initial={{ opacity: 0, y: reduced ? 0 : 12 }}
+      initial={{ opacity: 0, y: reduced ? 0 : 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={viewportOnce}
-      transition={{ duration: reduced ? 0.2 : 0.6, delay: reduced ? 0 : delay, ease: EASE_OUT }}
+      transition={{ duration: reduced ? 0.2 : 0.8, delay: reduced ? 0 : delay, ease: EASE_OUT }}
     >
       {children}
     </motion.p>
@@ -132,53 +138,80 @@ export function FadeText({
 }
 
 /**
- * Scroll-linked paragraph: each word brightens from dim to full as the
- * paragraph travels up through the viewport, so reading pace follows scroll.
+ * A sentence that inks in word by word as `progress` runs from 0 to 1, with
+ * a handwritten accent to finish it. The words are marked on and off directly
+ * on the DOM as the scroll moves, so reading pace follows the scroll without
+ * React rendering anything. See `.fill-word` in global.css for why the colour
+ * is painted the way it is.
  */
-export function ScrollHighlight({ text, className }: { text: string; className?: string }) {
-  const ref = useRef<HTMLParagraphElement>(null)
+export function ScrollFill({
+  text,
+  accent,
+  progress,
+  as = 'p',
+  id,
+  className,
+  accentClassName,
+}: {
+  text: string
+  accent?: string
+  progress: MotionValue<number>
+  as?: HeadingTag
+  id?: string
+  className?: string
+  accentClassName?: string
+}) {
   const reduced = useReducedMotion() ?? false
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 0.9', 'end 0.55'] })
+  const words = useRef<HTMLSpanElement[]>([])
+  const Tag = as
+  const plain = text.split(' ')
+  const all = accent ? [...plain, accent] : plain
 
-  if (reduced) {
-    return (
-      <p ref={ref} className={className}>
-        {text}
-      </p>
-    )
-  }
+  useMotionValueEvent(progress, 'change', (p) => {
+    if (reduced) return
+    // One more step than there are words, so the last one lands just before
+    // the end rather than exactly on it.
+    const lit = Math.ceil(p * (all.length + 1))
+    words.current.forEach((word, i) => word.toggleAttribute('data-on', i < lit))
+  })
 
-  const words = text.split(' ')
   return (
-    <p ref={ref} className={className}>
-      <span className="visually-hidden">{text}</span>
-      {words.map((word, i) => (
-        <Word
-          key={i}
-          progress={scrollYProgress}
-          range={[i / words.length, (i + 1) / words.length]}
-        >
-          {word}
-          {i < words.length - 1 ? ' ' : null}
-        </Word>
-      ))}
-    </p>
+    <Tag id={id} className={className}>
+      <span className="visually-hidden">{accent ? `${text} ${accent}` : text}</span>
+      <span aria-hidden="true">
+        {all.map((word, i) => {
+          const isAccent = accent !== undefined && i === all.length - 1
+          return (
+            <Fragment key={i}>
+              <span
+                ref={(el) => {
+                  if (el) words.current[i] = el
+                }}
+                className={`fill-word ${isAccent ? (accentClassName ?? '') : ''}`}
+                data-on={reduced ? '' : undefined}
+              >
+                {word}
+              </span>
+              {i < all.length - 1 ? ' ' : null}
+            </Fragment>
+          )
+        })}
+      </span>
+    </Tag>
   )
 }
 
-function Word({
-  children,
-  progress,
-  range,
-}: {
-  children: ReactNode
-  progress: MotionValue<number>
-  range: [number, number]
-}) {
-  const opacity = useTransform(progress, range, [0.22, 1])
+/**
+ * Scroll-linked paragraph: each word lights up as the paragraph travels up
+ * through the viewport, so reading pace follows scroll.
+ */
+export function ScrollHighlight({ text, className }: { text: string; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 0.9', 'end 0.55'] })
+
   return (
-    <motion.span aria-hidden="true" style={{ opacity }}>
-      {children}
-    </motion.span>
+    <div ref={ref}>
+      <ScrollFill text={text} progress={scrollYProgress} className={className} />
+    </div>
   )
 }

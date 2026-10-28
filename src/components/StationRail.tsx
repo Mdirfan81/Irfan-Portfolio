@@ -20,7 +20,7 @@ export function StationRail() {
           <a
             key={item.id}
             className={`${styles.stop} ${isActive ? styles.active : ''}`}
-            href={`#${item.id}`}
+            href={item.href}
             aria-current={isActive ? 'true' : undefined}
           >
             <span className={styles.label}>{item.label}</span>

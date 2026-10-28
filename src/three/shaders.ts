@@ -248,3 +248,79 @@ export const CONSTELLATION_FRAGMENT = /* glsl */ `
     #include <colorspace_fragment>
   }
 `;
+
+/**
+ * The dot-wave: a flat grid of points under the flight, lifted by three
+ * crossing swells and a ripple that spreads from under the pointer. The grid
+ * scrolls toward the viewer with the journey but is drawn wrapped, one row at a
+ * time, so it never runs out; the swells are sampled at the unwrapped
+ * position, so the water keeps its shape as the rows recycle.
+ */
+export const WAVE_VERTEX = /* glsl */ `
+  uniform float uTime;
+  uniform float uTravel;
+  uniform float uRow;
+  uniform float uDepth;
+  uniform float uSwell;
+  uniform float uPixels;
+  uniform float uOpacity;
+  uniform vec3 uRipple;
+  varying float vAlpha;
+  varying float vCrest;
+
+  void main() {
+    vec3 p = position;
+    // Move toward the viewer, wrapping each row back to the far end.
+    float shift = mod(uTravel, uRow);
+    p.z += shift;
+    float wz = p.z - uTravel;
+
+    float t = uTime;
+    float h = sin(p.x * 0.34 + wz * 0.16 + t * 0.85) * 0.42
+            + sin(p.x * 0.11 - wz * 0.31 - t * 0.55) * 0.34
+            + sin((p.x + wz) * 0.58 + t * 1.25) * 0.11;
+    h *= uSwell;
+
+    // The ripple under the pointer: rings that run outward and die away.
+    float d = distance(p.xz, uRipple.xy);
+    h += sin(d * 1.5 - t * 3.2) * exp(-d * 0.22) * 0.38 * uRipple.z;
+    p.y += h;
+
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    float dist = -mv.z;
+
+    // Gone into the haze far off, faded before it reaches the lens, and
+    // thinned out at the sides so the field has no hard edge.
+    float far = 1.0 - smoothstep(uDepth * 0.45, uDepth, dist);
+    float near = smoothstep(3.0, 7.0, dist);
+    float side = 1.0 - smoothstep(12.0, 21.0, abs(p.x));
+    vCrest = smoothstep(-0.55, 0.85, h);
+    vAlpha = uOpacity * far * near * side * (0.35 + 0.65 * vCrest);
+
+    // Capped, and nothing at all where the dot has faded out: a point is
+    // rasterised whole whatever its alpha, and the nearest rows would
+    // otherwise cover the bottom of the screen in invisible work.
+    gl_PointSize = clamp(0.075 * uPixels / dist, 1.4, 7.0) * step(0.003, vAlpha);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+export const WAVE_FRAGMENT = /* glsl */ `
+  uniform vec3 uTone;
+  uniform vec3 uAlt;
+  uniform vec3 uCore;
+  uniform float uLight;
+  varying float vAlpha;
+  varying float vCrest;
+
+  void main() {
+    float d = length(gl_PointCoord - 0.5) * 2.0;
+    float soft = 1.0 - smoothstep(0.0, 1.0, d);
+    // Troughs in the station's colour, crests in the second one, and on the
+    // dark theme the highest dots run white-hot.
+    vec3 color = mix(uTone, uAlt, vCrest);
+    color = mix(color, uCore, smoothstep(0.75, 1.0, vCrest) * 0.6 * (1.0 - uLight));
+    gl_FragColor = vec4(color, soft * vAlpha);
+    #include <colorspace_fragment>
+  }
+`;
